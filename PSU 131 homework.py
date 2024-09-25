@@ -3,7 +3,6 @@ factors = []
 
 numbers = int(input('Plug in a number to factor: '))
 a = numbers
-s = True
 
 
 for each in primes:
