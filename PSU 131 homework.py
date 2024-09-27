@@ -3,8 +3,13 @@ factors = []
 
 numbers = int(input('Plug in a number to factor: '))
 
+
 for num in primes:
-    if numbers % num == 0:
+    if numbers in primes:
+        factors.append('This is a prime')
+        break
+    elif numbers % num == 0:
         factors.append(num)
 
 print(factors)
+
