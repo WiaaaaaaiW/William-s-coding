@@ -1,1 +1,22 @@
+primes = [2]
+a = 3
+factors = []
+numbers = int(input('Plug in a number to factor: '))
 
+while a <= 300:
+    is_prime = True
+    for prime in primes:
+        if a % prime == 0:
+            is_prime = False
+            break
+    if is_prime:
+        primes.append(a)
+    a = a + 1
+
+for num in primes:
+    if numbers in primes:
+        factors.append('This is a prime')
+        break
+    elif numbers % num == 0:
+        factors.append(num)
+print(factors)
