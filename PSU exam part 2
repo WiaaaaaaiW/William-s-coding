@@ -13,10 +13,13 @@ while a <= 300:
         primes.append(a)
     a = a + 1
 
-for num in primes:
-    if numbers in primes:
-        factors.append('This is a prime')
-        break
-    elif numbers % num == 0:
-        factors.append(num)
+if numbers in primes:
+    factors.append('This is a prime')
+else:
+    for num in primes:
+        while numbers % num == 0:
+            factors.append(num)
+            numbers = numbers // num
+        if numbers == 1:
+            break
 print(factors)
