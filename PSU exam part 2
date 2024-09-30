@@ -1,7 +1,8 @@
 primes = [2]
 a = 3
-factors = {}
+factors = []
 numbers = int(input('Plug in a number to factor: '))
+counts = []
 
 while a <= 300:
     is_prime = True
@@ -14,21 +15,23 @@ while a <= 300:
     a = a + 1
 
 if numbers in primes:
-    print(f'{numbers} is a prime number')
+    print("This is a prime number")
 else:
-    original_number = numbers
+    number = numbers
     for num in primes:
         count = 0
         while numbers % num == 0:
-            count += 1
+            count = count + 1
             numbers = numbers // num
         if count > 0:
-            factors[num] = count
+            factors.append(num)
+            counts.append(count)
         if numbers == 1:
             break
-
     if numbers > 1:
-        factors[numbers] = 1
+        factors.append(number)
+        count.append(1)
 
-formatted_factors = [f"{prime}^{count}" if count > 1 else str(prime) for prime, count in factors.items()]
-print(f'Prime factors of {original_number}: {formatted_factors}')
+
+formatted_factors = [f"{factor}^{count}" if count > 1 else f"{factor}" for factor, count in zip(factors, counts)]
+print(f"factors = {' * '.join(formatted_factors)}")
