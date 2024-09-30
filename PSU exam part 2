@@ -22,7 +22,7 @@ else:
         count = 0
         while numbers % num == 0:
             count = count + 1
-            numbers = numbers // num
+            numbers = numbers / num
         if count > 0:
             factors.append(num)
             counts.append(count)
@@ -31,7 +31,6 @@ else:
     if numbers > 1:
         factors.append(number)
         count.append(1)
-
 
 formatted_factors = [f"{factor}^{count}" if count > 1 else f"{factor}" for factor, count in zip(factors, counts)]
 print(f"factors = {' * '.join(formatted_factors)}")
