@@ -32,5 +32,5 @@ else:
         factors.append(number)
         count.append(1)
 
-formatted_factors = [f"{factor}^{count}" if count > 1 else f"{factor}" for factor, count in zip(factors, counts)]
-print(f"factors = {' * '.join(formatted_factors)}")
+    formatted_factors = [f"{factor}^{count}" if count > 1 else f"{factor}" for factor, count in zip(factors, counts)]
+    print(f"factors = {' * '.join(formatted_factors)}")
