@@ -43,8 +43,10 @@ else:
             factors.append(numbers)
             counts.append(1)
 
-        factors3.append(1)
+
         formatted_factors = [f"{factor}^{count}" if count > 1 else f"{factor}" for factor, count in zip(factors, counts)]
         print(f"factors = {' * '.join(formatted_factors)}")
         formatted_factors2 = [f"{f2}|{f3}" for f2,f3 in zip(factors2,factors3)]
-        print(f"factors2 = {'\n'.join(formatted_factors2)}")
+        print(f"{'\n'.join(formatted_factors2)}")
+        print(1)
+
