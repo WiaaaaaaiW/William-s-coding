@@ -48,5 +48,5 @@ else:
         print(f"factors = {' * '.join(formatted_factors)}")
         formatted_factors2 = [f"{f2}|{f3}" for f2,f3 in zip(factors2,factors3)]
         print(f"{'\n'.join(formatted_factors2)}")
-        print(1 |)
+        print("1 |")
 
