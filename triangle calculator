@@ -1,0 +1,89 @@
+import math
+
+print('In a right triangle ABC with sides AB, AC, and BC:')
+print('Side BC is the hypotenuse, and sides AB and AC are the catheti (legs) forming the right angle at A.')
+print('Right angle A = 90 degrees\n')
+
+def triangle():
+    question_1 = input("Do you want to enter the length of the sides of the triangle (put 'Yes' or 'No'): ").lower()
+    if question_1 == 'yes':
+        side_AB = input("Enter the length of side AB (leave blank if unknown): ")
+        side_AC = input("Enter the length of side AC (leave blank if unknown): ")
+        side_BC = input("Enter the length of side BC (leave blank if unknown): ")
+
+        side_AB = float(side_AB) if side_AB and side_AB.replace('.', '', 1).isdigit() else None
+        side_AC = float(side_AC) if side_AC and side_AC.replace('.', '', 1).isdigit() else None
+        side_BC = float(side_BC) if side_BC and side_BC.replace('.', '', 1).isdigit() else None
+
+        side_AB1 = side_AC1 = side_BC1 = angle_b1 = angle_c1 = None
+
+        if side_BC == side_AC and side_AB == side_BC:
+            print("Error: In a right triangle, hypotenuse (BC) must be longer than the legs (AB and AC).")
+            return
+
+        angle_b = input("Enter the angle b (in degrees) opposite to side AB (leave blank if unknown): ")
+        angle_c = input("Enter the angle c (in degrees) opposite to side AC (leave blank if unknown): ")
+
+        angle_b = float(angle_b) if angle_b and angle_b.replace('.', '', 1).isdigit() else None
+        angle_c = float(angle_c) if angle_c and angle_c.replace('.', '', 1).isdigit() else None
+        if angle_b is not None and angle_c is not None and (angle_b + angle_c) != 90:
+            print("Error: The angles do not sum to 90°. Please check your input.")
+            return
+    else:
+        print("Sorry, I need side lengths to perform calculations.")
+        return
+
+    if side_AB is not None and side_AC is not None:
+        side_BC1 = math.sqrt(side_AB ** 2 + side_AC ** 2)
+        angle_b1 = math.degrees(math.atan(side_AB / side_AC))
+        angle_c1 = 90 - angle_b1
+
+    elif side_AB is not None and side_BC is not None:
+        if side_BC > side_AB:
+            side_AC1 = math.sqrt(side_BC ** 2 - side_AB ** 2)
+            angle_b1 = math.degrees(math.asin(side_AB / side_BC))
+            angle_c1 = 90 - angle_b1
+        else:
+            print("Invalid side lengths: Hypotenuse (BC) must be the longest side.")
+            return
+
+    elif side_AC is not None and side_BC is not None:
+        if side_BC > side_AC:
+            side_AB1 = math.sqrt(side_BC ** 2 - side_AC ** 2)
+            angle_c1 = math.degrees(math.asin(side_AC / side_BC))
+            angle_b1 = 90 - angle_c1
+        else:
+            print("Invalid side lengths: Hypotenuse (BC) must be the longest side.")
+            return
+
+    elif side_BC is not None and angle_b is not None:
+        angle_b_rad = math.radians(angle_b)
+        side_AB1 = side_BC * math.cos(angle_b_rad)
+        side_AC1 = side_BC * math.sin(angle_b_rad)
+        angle_b1 = angle_b
+        angle_c1 = 90 - angle_b1
+
+    if side_AB is not None and side_AB1 is not None and round(side_AB, 2) != round(side_AB1, 2):
+        print(f"Error: Entered side AB = {side_AB}, but recalculated AB = {round(side_AB1, 2)}. Please check your input.")
+        return
+    if side_AC is not None and side_AC1 is not None and round(side_AC, 2) != round(side_AC1, 2):
+        print(f"Error: Entered side AC = {side_AC}, but recalculated AC = {round(side_AC1, 2)}. Please check your input.")
+        return
+    if side_BC is not None and side_BC1 is not None and round(side_BC, 2) != round(side_BC1, 2):
+        print(f"Error: Entered side BC = {side_BC}, but recalculated BC = {round(side_BC1, 2)}. Please check your input.")
+        return
+    if angle_b is not None and angle_b1 is not None and round(angle_b, 2) != round(angle_b1, 2):
+        print(f"Error: Entered angle b = {angle_b}, but recalculated b = {round(angle_b1, 2)}°. Please check your input.")
+        return
+    if angle_c is not None and angle_c1 is not None and round(angle_c, 2) != round(angle_c1, 2):
+        print(f"Error: Entered angle c = {angle_c}, but recalculated c = {round(angle_c1, 2)}°. Please check your input.")
+        return
+
+    print("\nCalculated values:")
+    print(f"Side AB: {round(side_AB1 if side_AB1 is not None else side_AB, 2) if side_AB is not None or side_AB1 is not None else 'N/A'}")
+    print(f"Side AC: {round(side_AC1 if side_AC1 is not None else side_AC, 2) if side_AC is not None or side_AC1 is not None else 'N/A'}")
+    print(f"Side BC: {round(side_BC1 if side_BC1 is not None else side_BC, 2) if side_BC is not None or side_BC1 is not None else 'N/A'}")
+    print(f"Angle b: {round(angle_b1 if angle_b1 is not None else angle_b, 2) if angle_b is not None or angle_b1 is not None else 'N/A'}°")
+    print(f"Angle c: {round(angle_c1 if angle_c1 is not None else angle_c, 2) if angle_c is not None or angle_c1 is not None else 'N/A'}°")
+
+triangle()
