@@ -14,8 +14,10 @@
 
 
 import csv
-import webbrowser, time
+import webbrowser
+import time
 import os
+
 
 # Stack class for implementing a stack data structure
 class Stack:
@@ -37,8 +39,9 @@ class Stack:
     def size(self):
         return len(self.items)
 
+
 # Queue class for implementing a queue data structure
-class Queue():
+class Queue:
     def __init__(self):
         self.items = []
 
@@ -46,13 +49,16 @@ class Queue():
         self.items.insert(0, item)
 
     def dequeue(self):
-        return self.items.pop()
+        if not self.isEmpty():
+            return self.items.pop()
+        return None
 
     def isEmpty(self):
         return not bool(self.items)
 
     def size(self):
         return len(self.items)
+
 
 # Load artist database from CSV file
 artists = []
@@ -67,9 +73,10 @@ if not os.path.exists(f):
 
 # Read the artist database from CSV file
 if os.path.exists(f):
-    with open(f, 'r', newline='') as file:
+    with open(f, 'r', newline='', encoding='utf-8-sig') as file:
         reader = csv.DictReader(file)
-        artists = [row for row in reader]
+        artists = [{k.strip(): v.strip() for k, v in row.items() if k.strip() in fieldnames} for row in reader]
+
 
 # Function to display a menu and allow users to select a song by number
 def present_menu(artists):
@@ -78,7 +85,7 @@ def present_menu(artists):
         for i, artist in enumerate(artists, 1):
             print(f"{i}. {artist['name']} by {artist['artist']}")
 
-        selection = input("Enter the number of your selection (or 0 to quit): ").strip()
+        selection = input("Enter the number of your selection (or 0 to play the song): ").strip()
         if selection.isdigit():
             selection = int(selection)
             if selection == 0:
@@ -87,89 +94,88 @@ def present_menu(artists):
                 return artists[selection - 1]
         print("Invalid selection. Please enter a number from the list.")
 
+
 # Function to create a playlist based on user selection
 def playlists():
     playlist = []
-    count = 0
-
-    while count < 3:  # Limit playlist to 3 songs
+    while len(playlist) < 3:
         selected_song = present_menu(artists)
         if selected_song == "Quit":
             break
         if selected_song:
-            playlist.append(selected_song)
-            count += 1
+            playlist.append({k: v for k, v in selected_song.items() if k in fieldnames})
         else:
             print("No song selected.")
             return False
     return playlist
 
+
 # Function to save the playlist to a CSV file
 def save_playlist_to_csv(playlist):
     if playlist:
         with open('PlayList.csv', 'w', newline='') as file:
-            fieldnames = ['name', 'artist', 'length', 'link']
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
-
-            # Ensure only valid fields are written to the CSV
-            clean_playlist = [{k: v for k, v in song.items() if k in fieldnames} for song in playlist]
-            writer.writerows(clean_playlist)
+            writer.writerows(playlist)
         print("Playlist saved to PlayList.csv")
     else:
         print("No playlist to save.")
 
+
+# Function to convert time format (MM:SS or H:MM:SS) to total seconds
+def convert_to_seconds(t_str):
+    try:
+        t_parts = t_str.split(":")
+        if len(t_parts) == 2:
+            minutes = int(t_parts[0])
+            seconds = int(t_parts[1])
+            return (minutes * 60) + seconds
+        elif len(t_parts) == 3:
+            hours = int(t_parts[0])
+            minutes = int(t_parts[1])
+            seconds = int(t_parts[2])
+            return (hours * 3600) + (minutes * 60) + seconds
+        return 0
+    except ValueError:
+        return 0
+
+
 # Main function to create and save a playlist
 def main():
     final_playlist = playlists()
-    save_playlist_to_csv(final_playlist)
+    if final_playlist:
+        save_playlist_to_csv(final_playlist)
+
 
 if __name__ == "__main__":
     main()
 
 # Initialize the queue for playing videos
 q = Queue()
-
 while True:
     if not os.path.exists('PlayList.csv'):
         print("Waiting for playlist...")
         time.sleep(15)
         continue
-    else:
-        with open('PlayList.csv', 'r', encoding='utf-8-sig') as file:
-            reader = csv.DictReader(file)
-            videos = [row for row in reader]
 
-        for video in videos:
-            if video and 'link' in video:
-                q.enqueue(video)
+    with open('PlayList.csv', 'r', encoding='utf-8-sig') as file:
+        reader = csv.DictReader(file)
+        videos = [{k.strip(): v.strip() for k, v in row.items() if k.strip() in fieldnames} for row in reader]
+
+    for video in videos:
+        if video and 'link' in video:
+            q.enqueue(video)
 
     print(f"Total videos in queue: {q.size()}")
 
-    # Function to convert time format (MM:SS or H:MM:SS) to total seconds
-    def convert_to_seconds(t_str):
-        t_parts = t_str.split(":")
-        if len(t_parts) == 2:
-            minutes = int(t_parts[0])
-            seconds = int(t_parts[1])
-            total_s = (minutes * 60) + seconds
-            return total_s
-        elif len(t_parts) == 3:
-            hours = int(t_parts[0])
-            minutes = int(t_parts[1])
-            seconds = int(t_parts[2])
-            total_s = (hours * 3600) + (minutes * 60) + seconds
-        else:
-            return 0
-        return total_s
-
-    # Process the queue and play videos
     while not q.isEmpty():
         current_v = q.dequeue()
+        if not current_v:
+            continue
         v_link = current_v['link']
         v_name = current_v['name']
         v_length_str = current_v.get('length', "0")
-        v_length = convert_to_seconds(v_length_str) if ":" in v_length_str else int(v_length_str)
+        v_length = convert_to_seconds(v_length_str)
 
         print(f'{v_name} is now playing.')
         webbrowser.open(v_link)
@@ -178,10 +184,13 @@ while True:
             print(f'Waiting for {v_length} seconds...')
             time.sleep(v_length)
         else:
-            print("No song found. Waiting 5 minutes (default).")
+            print("No song length found. Waiting 5 minutes (default).")
             time.sleep(300)
 
         print("Moving to the next video...\n")
 
-    print("No more songs in queue. Checking for new playlist every 15 seconds...")
+    if os.path.exists('PlayList.csv'):
+        print("Playlist finished.")
+        os.remove('PlayList.csv')
+    print("Checking for new songs every 15 seconds...")
     time.sleep(15)
