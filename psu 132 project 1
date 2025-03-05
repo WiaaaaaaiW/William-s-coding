@@ -182,3 +182,6 @@ while True:
             time.sleep(300)
 
         print("Moving to the next video...\n")
+
+    print("No more songs in queue. Checking for new playlist every 15 seconds...")
+    time.sleep(15)
