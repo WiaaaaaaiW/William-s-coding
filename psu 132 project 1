@@ -1,173 +1,118 @@
 
 # Program Name: Jukebox.py
 #
-# Author(s): <name>
+# Author(s): Jason Feng, Yuxin Liu, William Sun
 #
-# Date: <date>
-#
-# Description:
-# <describe what the program does>
-#
-"""
-Use the following header for your Class Header
-"""
-#
-# Class Name: <class name>
-#
-# Author: <name> - Only necessary if multiple authors in file (projects)
+# Date: 06/03/2025
 #
 # Description:
-# <briefly describe what the Class is and what it does>
+# This program allows users to create a music playlist by selecting songs from a database.
+# The playlist is saved to a CSV file, and the songs are played automatically using their links.
 #
-"""
-Use the following header for your Method/Function Header
-"""
+
 #
-# Function/Method Name: <name>
-#
-# Author: <name> - Only necessary if multiple authors in file (projects)
-#
-# Parameters: <identify calling parameters>
-#
-# Return Value: <describe what is being returned from this function or None>
-#
-# Description:
-# <briefly describe what this method does>
-#
+
+
+
+
 
 import csv
 import webbrowser, time
 import os
 
-# Used pythonds3 code for stacks:
-# https://runestone.academy/ns/books/published/pythonds3/BasicDS/ImplementingaStackinPython.html
+# Stack class for implementing a stack data structure
 class Stack:
-    # implementation of stack as a list.
-
     def __init__(self):
-        # create a new stack.
         self.items = []
-    
+
     def push(self, item):
-        # adds an item to the stack.
         self.items.append(item)
 
     def pop(self):
-        # removes an item from the stack.
         return self.items.pop()
-    
+
     def peek(self):
-        # returns value of the top item in stack.
         return self.items[-1]
-    
+
     def isEmpty(self):
-        # checks if stack is empty.
         return not bool(self.items)
-    
+
     def size(self):
-        # returns number of items in the stack.
         return len(self.items)
 
-# Used pythonds3 code for Queue:
-# https://runestone.academy/ns/books/published/pythonds3/BasicDS/ImplementingaQueueinPython.html
-
+# Queue class for implementing a queue data structure
 class Queue():
-    # implementation of Queue as a list.
-
     def __init__(self):
-        # create a new queue.
         self.items = []
 
     def enqueue(self, item):
-        # adds an item to the queue.
         self.items.insert(0, item)
 
     def dequeue(self):
-        # removes an item from the queue.
         return self.items.pop()
 
     def isEmpty(self):
-        # checks if the queue is empty.
         return not bool(self.items)
-    
+
     def size(self):
-        # returns the number of items in the queue.
         return len(self.items)
 
-
+# Load artist database from CSV file
 artists = []
 f = 'ArtistDB.csv'
 fieldnames = ['name', 'artist', 'length', 'link']
 
-# Create CSV file if it doesn't exist
+# Create CSV file if it does not exist
 if not os.path.exists(f):
     with open(f, 'w', newline='') as file:
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         writer.writeheader()
 
-# Read the CSV file as a dictionary
+# Read the artist database from CSV file
 if os.path.exists(f):
     with open(f, 'r', newline='') as file:
         reader = csv.DictReader(file)
         artists = [row for row in reader]
 
+# Function to display a menu and allow users to select a song by number
 def present_menu(artists):
-    # Function to display a menu and make a song selection 
     while True:
-        question = input(
-            "Enter song by Name or Artist: (plug in 'Quit' if you finish your choice) ").strip().title()
+        print("\nChoose a song by number:")
+        for i, artist in enumerate(artists, 1):
+            print(f"{i}. {artist['name']} by {artist['artist']}")
 
-        # Display the list of songs by name
-        if question == 'Name':
-            print('\nChoose song by name')
-            for artist in artists:
-                print(artist['name'])  
+        try:
+            selection = int(input("Enter the number of your selection (or 0 to quit): ").strip())
+            if selection == 0:
+                return "Quit"
+            elif 1 <= selection <= len(artists):
+                return artists[selection - 1]
+            else:
+                print("Invalid selection. Please enter a number from the list.")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
 
-        # Display the list of songs by artist
-        elif question == 'Artist':
-            print('\nChoose song by artist')
-            for artist in artists:
-                print(artist['artist'])  
-
-        # Allow the user to quit
-        elif question == "Quit":
-            return "Quit"
-    
-        selection = input('Please enter your selection: ').strip().title()
-
-        # Loop through the list of artists and match the selection, if the selection matches the name or the artist, return the artist's details
-        for artist in artists:
-            if selection == artist['name'] or selection == artist['artist']:
-                return artist
-            
-        print("Song not found.")
-
+# Function to create a playlist based on user selection
 def playlists():
-    # Function to create a playlist based on user selection
-    playlist = [] 
-    count = 0 
+    playlist = []
+    count = 0
 
     while True:
-        if count < 3:  # Allow the user to select up to 3 songs
-            # Display the song selection menu
+        if count < 3:  # Limit playlist to 3 songs
             selected_song = present_menu(artists)
-
-            # If the user chooses to quit, stop the process
             if selected_song == "Quit":
                 break
-
-            # If a song is selected, add it to the playlist
             if selected_song:
                 playlist.append(selected_song)
-                count += 1 
+                count += 1
             else:
                 print("No song selected.")
-                return False  # If no song was selected, exit the loop
+                return False
         else:
-            break  # Exit the loop once the playlist has 3 songs
-    return playlist  # Return the final playlist
+            break
+    return playlist
 
-# save the playlist in csv file
+# Function to save the playlist to a CSV file
 def save_playlist_to_csv(playlist):
     if playlist:
         with open('PlayList.csv', 'w', newline='') as file:
@@ -175,39 +120,33 @@ def save_playlist_to_csv(playlist):
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
 
-            #for song in playlist:
-                #writer.writerow(song)
-                
-            writer.writerows(playlist)
+            # Ensure only valid fields are written to the CSV
+            clean_playlist = [{k: v for k, v in song.items() if k in fieldnames} for song in playlist]
+            writer.writerows(clean_playlist)
         print("Playlist saved to PlayList.csv")
     else:
         print("No playlist to save.")
 
-
-#call the function
+# Main function to create and save a playlist
 def main():
     final_playlist = playlists()
     save_playlist_to_csv(final_playlist)
 
-
 if __name__ == "__main__":
     main()
 
-# Queue processing
+# Initialize the queue for playing videos
 q = Queue()
 
 while True:
-    # Read playlist file
     if not os.path.exists('PlayList.csv'):
         print("Waiting for playlist...")
         time.sleep(15)
         continue
-
     else:
-
         with open('PlayList.csv', 'r', encoding='utf-8-sig') as file:
             reader = csv.DictReader(file)
-            videos = [row for row in reader]  # Read all songs as dicts
+            videos = [row for row in reader]
 
         for video in videos:
             if video and 'link' in video:
@@ -215,47 +154,40 @@ while True:
 
     print(f"Total videos in queue: {q.size()}")
 
+    # Function to convert time format (MM:SS or H:MM:SS) to total seconds
     def convert_to_seconds(t_str):
-        # Convert time in MM:SS to total seconds.
-        t_parts = t_str.split(":")  # Split by ":"
-
-        # If video length is in MM:SS
+        t_parts = t_str.split(":")
         if len(t_parts) == 2:
-            minutes = int(t_parts[0])  # First part is minutes
-            seconds = int(t_parts[1])  # Second part is seconds
-            total_s = (minutes * 60) + seconds  # Convert to total seconds
-        
+            minutes = int(t_parts[0])
+            seconds = int(t_parts[1])
+            total_s = (minutes * 60) + seconds
             return total_s
-
-        # If video length is in H:MM:SS
         elif len(t_parts) == 3:
-            hours = int(t_parts[0])  # First part is hours
-            minutes = int(t_parts[1])  # Second part is minutes
-            seconds = int(t_parts[2])  # Third part is seconds
-            total_s =  (hours * 3600) + (minutes * 60) + seconds  # Convert to total seconds
-
-        # If the format is incorrect, return 0
+            hours = int(t_parts[0])
+            minutes = int(t_parts[1])
+            seconds = int(t_parts[2])
+            total_s = (hours * 3600) + (minutes * 60) + seconds
         else:
             return 0
         return total_s
-    
-    # Checks if queue is not empty
+
+    # Process the queue and play videos
     while not q.isEmpty():
         current_v = q.dequeue()
         v_link = current_v['link']
         v_name = current_v['name']
-        v_length_str = current_v.get('length', 0) # Get video length from CSV (default 0)
+        v_length_str = current_v.get('length', 0)
         v_length = convert_to_seconds(v_length_str) if ":" in v_length_str else int(v_length_str)
 
         print(f'{v_name} is now playing.')
-        webbrowser.open(v_link)  # Open video in browser
+        webbrowser.open(v_link)
 
         if v_length > 0:
             print(f'Waiting for {v_length} seconds...')
-            time.sleep(v_length)  # Wait for the video to finish
+            time.sleep(v_length)
         else:
             print("No song found. Waiting 5 minutes (default).")
-            time.sleep(300)  # Default wait time (5 minutes)
+            time.sleep(300)
 
         print("Moving to the next video...\n")
 
