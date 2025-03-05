@@ -78,35 +78,30 @@ def present_menu(artists):
         for i, artist in enumerate(artists, 1):
             print(f"{i}. {artist['name']} by {artist['artist']}")
 
-        try:
-            selection = int(input("Enter the number of your selection (or 0 to quit): ").strip())
+        selection = input("Enter the number of your selection (or 0 to quit): ").strip()
+        if selection.isdigit():
+            selection = int(selection)
             if selection == 0:
                 return "Quit"
             elif 1 <= selection <= len(artists):
                 return artists[selection - 1]
-            else:
-                print("Invalid selection. Please enter a number from the list.")
-        except ValueError:
-            print("Invalid input. Please enter a number.")
+        print("Invalid selection. Please enter a number from the list.")
 
 # Function to create a playlist based on user selection
 def playlists():
     playlist = []
     count = 0
 
-    while True:
-        if count < 3:  # Limit playlist to 3 songs
-            selected_song = present_menu(artists)
-            if selected_song == "Quit":
-                break
-            if selected_song:
-                playlist.append(selected_song)
-                count += 1
-            else:
-                print("No song selected.")
-                return False
-        else:
+    while count < 3:  # Limit playlist to 3 songs
+        selected_song = present_menu(artists)
+        if selected_song == "Quit":
             break
+        if selected_song:
+            playlist.append(selected_song)
+            count += 1
+        else:
+            print("No song selected.")
+            return False
     return playlist
 
 # Function to save the playlist to a CSV file
@@ -173,7 +168,7 @@ while True:
         current_v = q.dequeue()
         v_link = current_v['link']
         v_name = current_v['name']
-        v_length_str = current_v.get('length', 0)
+        v_length_str = current_v.get('length', "0")
         v_length = convert_to_seconds(v_length_str) if ":" in v_length_str else int(v_length_str)
 
         print(f'{v_name} is now playing.')
@@ -187,4 +182,3 @@ while True:
             time.sleep(300)
 
         print("Moving to the next video...\n")
-
