@@ -10,9 +10,6 @@
 # The playlist is saved to a CSV file, and the songs are played automatically using their links.
 #
 
-
-
-
 import csv
 import webbrowser
 import time
@@ -63,7 +60,7 @@ class Queue:
 # Load artist database from CSV file
 artists = []
 f = 'ArtistDB.csv'
-fieldnames = ['name', 'artist', 'length', 'link']
+fieldnames = ['','name', 'artist', 'length', 'link']
 
 # Create CSV file if it does not exist
 if not os.path.exists(f):
