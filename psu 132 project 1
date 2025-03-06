@@ -122,22 +122,29 @@ def save_playlist_to_csv(playlist):
         print("No playlist to save.")
 
 
-# Function to convert time format (MM:SS or H:MM:SS) to total seconds
 def convert_to_seconds(t_str):
-    try:
-        t_parts = t_str.split(":")
-        if len(t_parts) == 2:
-            minutes = int(t_parts[0])
-            seconds = int(t_parts[1])
-            return (minutes * 60) + seconds
-        elif len(t_parts) == 3:
-            hours = int(t_parts[0])
-            minutes = int(t_parts[1])
-            seconds = int(t_parts[2])
-            return (hours * 3600) + (minutes * 60) + seconds
+    # Convert time in MM:SS to total seconds.
+    t_parts = t_str.split(":")  # Split by ":"
+
+    # If video length is in MM:SS
+    if len(t_parts) == 2:
+        minutes = int(t_parts[0])  # First part is minutes
+        seconds = int(t_parts[1])  # Second part is seconds
+        total_s = (minutes * 60) + seconds  # Convert to total seconds
+    
+        return total_s
+
+    # If video length is in H:MM:SS
+    elif len(t_parts) == 3:
+        hours = int(t_parts[0])  # First part is hours
+        minutes = int(t_parts[1])  # Second part is minutes
+        seconds = int(t_parts[2])  # Third part is seconds
+        total_s =  (hours * 3600) + (minutes * 60) + seconds  # Convert to total seconds
+
+    # If the format is incorrect, return 0
+    else:
         return 0
-    except ValueError:
-        return 0
+    return total_s
 
 
 # Main function to create and save a playlist
@@ -153,11 +160,12 @@ if __name__ == "__main__":
 # Initialize the queue for playing videos
 q = Queue()
 while True:
+    # Creates a playlist CSV if file not found
     if not os.path.exists('PlayList.csv'):
         print("Waiting for playlist...")
         time.sleep(15)
         continue
-
+    # Reads the CSV file
     with open('PlayList.csv', 'r', encoding='utf-8-sig') as file:
         reader = csv.DictReader(file)
         videos = [{k.strip(): v.strip() for k, v in row.items() if k.strip() in fieldnames} for row in reader]
@@ -166,8 +174,9 @@ while True:
         if video and 'link' in video:
             q.enqueue(video)
 
-    print(f"Total videos in queue: {q.size()}")
+    print(f"Total videos in queue: {q.size()}") # display total song in queue
 
+    # Checks if queue is not empty
     while not q.isEmpty():
         current_v = q.dequeue()
         if not current_v:
@@ -179,12 +188,12 @@ while True:
 
         print(f'{v_name} is now playing.')
         webbrowser.open(v_link)
-
+        # if a song is selected into queue, it will play song duration before the next song.
         if v_length > 0:
             print(f'Waiting for {v_length} seconds...')
             time.sleep(v_length)
         else:
-            print("No song length found. Waiting 5 minutes (default).")
+            print("No song length found. Waiting 5 minutes (default).") # displays if no song is selected
             time.sleep(300)
 
         print("Moving to the next video...\n")
