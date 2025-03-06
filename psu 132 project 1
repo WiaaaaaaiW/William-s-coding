@@ -15,7 +15,6 @@ import webbrowser
 import time
 import os
 
-
 # Stack class for implementing a stack data structure
 class Stack:
     def __init__(self):
@@ -35,7 +34,6 @@ class Stack:
 
     def size(self):
         return len(self.items)
-
 
 # Queue class for implementing a queue data structure
 class Queue:
@@ -63,6 +61,7 @@ f = 'ArtistDB.csv'
 fieldnames = ['','name', 'artist', 'length', 'link']
 
 # Create CSV file if it does not exist
+# Note: This code ONLY executes if file does not exist, otherwise this piece of code will be skipped.
 if not os.path.exists(f):
     with open(f, 'w', newline='') as file:
         writer = csv.DictWriter(file, fieldnames=fieldnames)
