@@ -1,1 +1,145 @@
+import csv
+from datetime import datetime
+
+# Read county vote data
+with open('Voting-Counties.csv', 'r', encoding='utf-8-sig') as file:
+    data = file.readlines()
+del data[0]
+
+# Gather all state abbreviations (ignoring blanks)
+states = set()
+for county in data:
+    info = county.split(',')
+    state_id = info[3].strip()
+    if state_id:
+        states.add(state_id)
+
+states = list(states)
+
+# Read state info (electoral votes)
+with open('State-Info.csv', 'r', encoding='utf-8-sig') as file:
+    reader = csv.reader(file, quotechar='"', skipinitialspace=True)
+    info_list = list(reader)
+
+info_list = info_list[4:55]  # Remove headers
+State_and_EVote = {}
+for state in info_list:
+    State_Abbr = state[1]
+    electoral_votes = int(state[14].replace(',', ''))
+    State_and_EVote[State_Abbr] = electoral_votes
+
+# Storage for results
+PopularVote_R = 0
+PopularVote_B = 0
+Total_Votes_R = 0
+Total_Votes_B = 0
+State_Summary = {}
+
+# Calculate votes and store state summaries
+for state in states:
+    SVote_R = 0
+    SVote_B = 0
+    for county in data:
+        info = county.split(',')
+        if info[3] == state:
+            SVote_R += int(info[13])
+            SVote_B += int(info[14])
+
+    total_votes = SVote_R + SVote_B
+    percent_B = (SVote_B / total_votes) * 100 if total_votes > 0 else 0
+    percent_R = (SVote_R / total_votes) * 100 if total_votes > 0 else 0
+    winner = 'Buggs Bunny' if SVote_B > SVote_R else 'Road Runner'
+    EVotes = State_and_EVote.get(state, 0)
+
+    State_Summary[state] = {
+        'BB': SVote_B,
+        'RR': SVote_R,
+        'percent_B': percent_B,
+        'percent_R': percent_R,
+        'winner': winner,
+        'EVotes': EVotes
+    }
+
+    PopularVote_B += SVote_B
+    PopularVote_R += SVote_R
+
+    if winner == 'Buggs Bunny':
+        Total_Votes_B += EVotes
+    elif winner == 'Road Runner':
+        Total_Votes_R += EVotes
+
+# Final summary
+print(f'Road Runner: {Total_Votes_R} Electoral Votes')
+print(f'Buggs Bunny: {Total_Votes_B} Electoral Votes')
+
+if Total_Votes_B > Total_Votes_R:
+    print('Buggs Bunny wins the election!')
+else:
+    print('Road Runner wins the election!')
+
+# Task 7 – State Summary
+def state_summary(state_id):
+    if state_id in State_Summary:
+        summary = State_Summary[state_id]
+        print(f"\nSummary for State: {state_id}")
+        print(f"Buggs Bunny: {summary['BB']} votes ({summary['percent_B']:.2f}%)")
+        print(f"Road Runner: {summary['RR']} votes ({summary['percent_R']:.2f}%)")
+        print(f"Winner: {summary['winner']}")
+        print(f"Electoral Votes Awarded: {summary['EVotes']}")
+    else:
+        print("Invalid state ID")
+
+# Task 8 – Summary Table
+print("\n{:<8} {:>12} {:>12} {:>10} {:>10}".format("State", "BB Votes", "RR Votes", "Winner", "EVotes"))
+for state in sorted(State_Summary.keys()):
+    summary = State_Summary[state]
+    print("{:<8} {:>12} {:>12} {:>10} {:>10}".format(
+        state, summary['BB'], summary['RR'], summary['winner'], summary['EVotes']
+    ))
+
+# Task 9 – Time-based report
+# Assume data contains timestamps in column 15 (index 15) if available
+def datetime_summary(user_time_str):
+    try:
+        user_time = datetime.strptime(user_time_str, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        print("Invalid format. Use YYYY-MM-DD HH:MM:SS")
+        return
+
+    Pop_B, Pop_R = 0, 0
+    EV_B, EV_R = 0, 0
+    states_reported = set()
+
+    for state in states:
+        SVote_R, SVote_B = 0, 0
+        all_reported = True
+        for county in data:
+            info = county.strip().split(',')
+            if info[3] == state:
+                try:
+                    timestamp = datetime.strptime(info[15], "%Y-%m-%d %H:%M:%S")
+                    if timestamp <= user_time:
+                        SVote_R += int(info[13])
+                        SVote_B += int(info[14])
+                    else:
+                        all_reported = False
+                except (IndexError, ValueError):
+                    all_reported = False
+                    continue
+        Pop_B += SVote_B
+        Pop_R += SVote_R
+
+        if all_reported:
+            if SVote_B > SVote_R:
+                EV_B += State_and_EVote.get(state, 0)
+            elif SVote_R > SVote_B:
+                EV_R += State_and_EVote.get(state, 0)
+            states_reported.add(state)
+
+    percent_reported = (len(states_reported) / len(states)) * 100
+    print(f"\nTime-based Summary as of {user_time_str}:")
+    print(f"Popular Vote — BB: {Pop_B}, RR: {Pop_R}")
+    print(f"Electoral Vote — BB: {EV_B}, RR: {EV_R}")
+    print(f"Percentage of states fully reported: {percent_reported:.2f}%")
+
 
