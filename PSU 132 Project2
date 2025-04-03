@@ -1,5 +1,17 @@
+# Name: Yuxin Liu, William Sun, Jason Feng
+# Assignment: Project 2: Simulated Election
+# Date: 04/03/2025
+#
+# Team Members Role:
+# 
+#
+
+
 import csv
+import os
+import matplotlib.pyplot as plt
 from datetime import datetime
+
 
 # Read county vote data
 with open('Voting-Counties.csv', 'r', encoding='utf-8-sig') as file:
@@ -141,5 +153,40 @@ def datetime_summary(user_time_str):
     print(f"Popular Vote — BB: {Pop_B}, RR: {Pop_R}")
     print(f"Electoral Vote — BB: {EV_B}, RR: {EV_R}")
     print(f"Percentage of states fully reported: {percent_reported:.2f}%")
+
+
+plt.figure(figsize=(10, 6))
+for county in data:
+    info = county.split(',')
+    state_id = info[3].strip()
+    lat = float(info[6])
+    lon = float(info[7])
+    if info[14]:  # Buggs Bunny votes column
+        BB_Votes = int(info[14])
+        RR_Votes = int(info[13])
+        color = 'green' if BB_Votes > RR_Votes else 'magenta'
+        plt.scatter(lon, lat, color=color, alpha=0.6)
+plt.xlabel("Longitude")
+plt.ylabel("Latitude")
+plt.title("County Election Results: Buggs Bunny (Green) vs Road Runner (Magenta)")
+plt.show()
+
+def plot_state_results(state_id):
+    plt.figure(figsize=(8, 5))
+    for county in data:
+        info = county.split(',')
+        if info[3] == state_id:  # Filter for state
+            lat = float(info[6])
+            lon = float(info[7])
+            BB_Votes = int(info[14])
+            RR_Votes = int(info[13])
+            color = 'green' if BB_Votes > RR_Votes else 'magenta'
+            plt.scatter(lon, lat, color=color, alpha=0.6)
+
+    plt.xlabel("Longitude")
+    plt.ylabel("Latitude")
+    plt.title(f"Election Results for {state_id}")
+    plt.show()
+
 
 
