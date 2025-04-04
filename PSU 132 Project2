@@ -3,66 +3,86 @@
 # Date: 04/03/2025
 #
 # Team Members Role:
-# 
+# Yuxin Liu: 
+# -> Task on handling the extra credit tasks involving the usage of matplotlib for plotting
+# -> Handles any error and fixes any code as well as adding any additional codes.
 #
+# William Sun:
+# -> Given task 7, 8, and 9 that handles the summary votes, print header of summary table, and generatesvoting summary
+#
+# Jason Feng:
+# -> Given task 1 , 2, 3, 4, 5, and 6
+# -> These tasks handles the two file datas, convery votes into %, and determination of who won.
+
 
 
 import csv
-import os
 import matplotlib.pyplot as plt
 from datetime import datetime
 
+# Define file paths
+voting_file = "C:/Users/spluffy/Downloads/Voting-Counties.csv"
+state_info_file = "C:/Users/spluffy/Downloads/State-Info.csv"
 
-# Read county vote data
-with open('Voting-Counties.csv', 'r', encoding='utf-8-sig') as file:
+# Task 1: Read county vote data and sum votes for each candidate per state (Jason Feng)
+with open(voting_file, 'r', encoding='utf-8-sig') as file:
     data = file.readlines()
-del data[0]
+del data[0] # removes header
 
 # Gather all state abbreviations (ignoring blanks)
 states = set()
 for county in data:
     info = county.split(',')
-    state_id = info[3].strip()
-    if state_id:
-        states.add(state_id)
+    if len(info) > 3:
+        state_id = info[3].strip()
+        if state_id:
+            states.add(state_id)  # Add unique state abbreviations
 
-states = list(states)
+states = list(states)  # Convert set to list for processing
 
-# Read state info (electoral votes)
-with open('State-Info.csv', 'r', encoding='utf-8-sig') as file:
+# Task 4: Read state info (electoral votes) from State-Info.csv (Jason Feng)
+with open(state_info_file, 'r', encoding='utf-8-sig') as file:
     reader = csv.reader(file, quotechar='"', skipinitialspace=True)
     info_list = list(reader)
 
-info_list = info_list[4:55]  # Remove headers
-State_and_EVote = {}
+info_list = info_list[4:55]  # Remove headers and extra rows
+State_and_EVote = {}  # Dictionary to hold state abbreviation and electoral votes
 for state in info_list:
-    State_Abbr = state[1]
-    electoral_votes = int(state[14].replace(',', ''))
-    State_and_EVote[State_Abbr] = electoral_votes
+    if len(state) > 14:
+        State_Abbr = state[1]  # State abbreviation
+        try:
+            electoral_votes = int(state[14].replace(',', ''))  # Convert vote string to int
+            State_and_EVote[State_Abbr] = electoral_votes
+        except ValueError:
+            continue
 
 # Storage for results
-PopularVote_R = 0
+PopularVote_R = 0 
 PopularVote_B = 0
 Total_Votes_R = 0
 Total_Votes_B = 0
 State_Summary = {}
 
-# Calculate votes and store state summaries
+# Task 2, 3, 5: Calculate votes, percentages, determine winners per state and store state summaries. (Jason Feng)
 for state in states:
-    SVote_R = 0
-    SVote_B = 0
+    SVote_R = 0  # State-level Road Runner votes
+    SVote_B = 0  # State-level Buggs Bunny votes
     for county in data:
         info = county.split(',')
-        if info[3] == state:
-            SVote_R += int(info[13])
-            SVote_B += int(info[14])
+        if len(info) > 14 and info[3] == state:
+            try:
+                SVote_R += int(info[13])
+                SVote_B += int(info[14])
+            except ValueError:
+                continue
 
     total_votes = SVote_R + SVote_B
     percent_B = (SVote_B / total_votes) * 100 if total_votes > 0 else 0
     percent_R = (SVote_R / total_votes) * 100 if total_votes > 0 else 0
     winner = 'Buggs Bunny' if SVote_B > SVote_R else 'Road Runner'
-    EVotes = State_and_EVote.get(state, 0)
+    EVotes = State_and_EVote.get(state, 0) # Get electoral votes
 
+    # Store results in the summary dictionary
     State_Summary[state] = {
         'BB': SVote_B,
         'RR': SVote_R,
@@ -72,22 +92,25 @@ for state in states:
         'EVotes': EVotes
     }
 
+    # Update national popular vote totals
     PopularVote_B += SVote_B
     PopularVote_R += SVote_R
 
+    # Award electoral votes to the winning candidate in the state
     if winner == 'Buggs Bunny':
         Total_Votes_B += EVotes
     elif winner == 'Road Runner':
         Total_Votes_R += EVotes
 
-# Final summary
+# Task 6: Print final electoral college results (Jason Feng)
+print("\nFinal Electoral Vote Count:")
 print(f'Road Runner: {Total_Votes_R} Electoral Votes')
 print(f'Buggs Bunny: {Total_Votes_B} Electoral Votes')
-
 if Total_Votes_B > Total_Votes_R:
     print('Buggs Bunny wins the election!')
 else:
     print('Road Runner wins the election!')
+
 
 # Task 7 – Summary the votes from each state (William Sun)
 def state_summary(state_id):
@@ -104,17 +127,25 @@ def state_summary(state_id):
         # If the state ID is not valid
         print("Invalid state ID")
 
-# Task 8 – # Print header of the summary table (William Sun)
-print("\n{:<8} {:>12} {:>12} {:>10} {:>10}".format("State", "BB Votes", "RR Votes", "Winner", "EVotes"))
+
+# Task 8: Print summary table of results (William Sun)
+print("\n{:<12} {:>15} {:>15} {:>10} {:>10} {:>10}".format("State", "BB Votes", "RR Votes", "BB %", "RR %", "EVotes"))
+print("-" * 70)
+for state in sorted(State_Summary.keys()):
+    summary = State_Summary[state]
+    print("{:<12} {:>15} {:>15} {:>9.2f}% {:>9.2f}% {:>10}".format(
+        state, summary['BB'], summary['RR'], summary['percent_B'], summary['percent_R'], summary['EVotes']
+    ))
+
 
 # Loop through each state alphabetically and print summary row
 for state in sorted(State_Summary.keys()):
     summary = State_Summary[state]
-    print("{:<8} {:>12} {:>12} {:>10} {:>10}".format(
-        state, summary['BB'], summary['RR'], summary['winner'], summary['EVotes']
+    print("{:<12} {:>15} {:>15} {:>9.2f}% {:>9.2f}% {:>10}".format(
+        state, summary['BB'], summary['RR'], summary['percent_B'], summary['percent_R'], summary['EVotes']
     ))
 
-# Task 9 – # Generates voting summary as of a specific datetime input by the user (William Sun)
+# Task 9: Generate summary based on user-specific date/time (William Sun)
 def datetime_summary(user_time_str):
     try:
         # Parse the user input into a datetime object
@@ -175,38 +206,22 @@ def datetime_summary(user_time_str):
 
 
 
+# Extra credit task 1: PLot county election results on a map (Yuxin Liu)
 plt.figure(figsize=(10, 6))
 for county in data:
     info = county.split(',')
-    state_id = info[3].strip()
-    lat = float(info[6])
-    lon = float(info[7])
-    if info[14]:  # Buggs Bunny votes column
-        BB_Votes = int(info[14])
-        RR_Votes = int(info[13])
-        color = 'green' if BB_Votes > RR_Votes else 'magenta'
-        plt.scatter(lon, lat, color=color, alpha=0.6)
+    if len(info) > 7 and info[6] and info[7]:  # Ensure latitude and longitude exist
+        try:
+            lat = float(info[6])
+            lon = float(info[7])
+            BB_Votes = int(info[14]) if info[14] else 0
+            RR_Votes = int(info[13]) if info[13] else 0
+            color = 'green' if BB_Votes > RR_Votes else 'magenta' # Determine winner color
+            plt.scatter(lon, lat, color=color, alpha=0.6)
+        except ValueError:
+            continue
+
 plt.xlabel("Longitude")
 plt.ylabel("Latitude")
 plt.title("County Election Results: Buggs Bunny (Green) vs Road Runner (Magenta)")
 plt.show()
-
-def plot_state_results(state_id):
-    plt.figure(figsize=(8, 5))
-    for county in data:
-        info = county.split(',')
-        if info[3] == state_id:  # Filter for state
-            lat = float(info[6])
-            lon = float(info[7])
-            BB_Votes = int(info[14])
-            RR_Votes = int(info[13])
-            color = 'green' if BB_Votes > RR_Votes else 'magenta'
-            plt.scatter(lon, lat, color=color, alpha=0.6)
-
-    plt.xlabel("Longitude")
-    plt.ylabel("Latitude")
-    plt.title(f"Election Results for {state_id}")
-    plt.show()
-
-
-
