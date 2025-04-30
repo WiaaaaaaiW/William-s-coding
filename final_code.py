@@ -39,7 +39,7 @@ class AttackType(Enum):
 #
 class Skill:
     #
-    #   Function/Method Name:   __init__
+    #   Function/Method Name:   __William Sun__
     #
     #   Author:      
     #
