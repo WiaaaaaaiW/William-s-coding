@@ -1,0 +1,26 @@
+// 1-bit full adder module
+module adder(A,B,C,S,Cout);
+  input A,B,C;
+  output S,Cout;
+  wire wire1,wire2,wire3;
+  
+  xor	AA(wire1,A,B);
+  xor	BA(S,wire1,C);
+  and	CA(wire2,A,B);
+  and	DA(wire3,wire1,C);
+  or	EA(Cout,wire2,wire3);
+endmodule
+// → This module defines a 1-bit full adder using basic logic gates (XOR, AND, OR).
+
+// 3-bit ripple-carry adder module using three 1-bit adders
+module lab5(A0,B0,A1,B1,A2,B2,Coin,S0,S1,S2,Cout2);
+  input A0,B0,A1,B1,A2,B2,Coin;
+  output S0,S1,S2,Cout2;
+  wire Cout0,Cout1;
+  
+  adder	F(A0,B0,Coin,S0,Cout0);
+  adder	G(A1,B1,Cout0,S1,Cout1);
+  adder	H(A2,B2,Cout1,S2,Cout2);
+  
+endmodule
+// → This module connects three 1-bit adders in series to create a 3-bit ripple-carry adder.
