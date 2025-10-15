@@ -1,0 +1,60 @@
+// Code your testbench here
+// or browse Examples
+`timescale 1ns/1ps
+
+module testbench();
+  // Inputs to DUT
+  reg A0, A1, A2, enable;
+
+  // Outputs from DUT
+  wire D0, D1, D2, D3, D4, D5, D6, D7;
+
+  // Helpful vectors for printing
+  wire [2:0] A = {A2, A1, A0};
+  wire [7:0] D = {D7, D6, D5, D4, D3, D2, D1, D0};
+
+  // Device Under Test — use **named ports** to avoid order mistakes
+  decoder3 UUT (
+    .A0(A0), .A1(A1), .A2(A2), .enable(enable),
+    .D0(D0), .D1(D1), .D2(D2), .D3(D3),
+    .D4(D4), .D5(D5), .D6(D6), .D7(D7)
+  );
+
+  initial begin
+    // Wave dump
+    $dumpfile("dump.vcd");
+    $dumpvars(0);
+
+    // ---- Vector 1 ----
+    enable = 1'b0;
+    {A2,A1,A0} = 3'b000;
+    #1;
+    $display("EN=%b  A=%b (%0d)  ->  D=%b", enable, A, A, D);
+
+    // ---- Vector 2 ----
+    enable = 1'b0;
+    {A2,A1,A0} = 3'b101;
+    #1;
+    $display("EN=%b  A=%b (%0d)  ->  D=%b", enable, A, A, D);
+
+    // ---- Vector 3 ----
+    enable = 1'b1;
+    {A2,A1,A0} = 3'b000;
+    #1;
+    $display("EN=%b  A=%b (%0d)  ->  D=%b", enable, A, A, D);
+
+    // ---- Vector 4 ----
+    enable = 1'b1;
+    {A2,A1,A0} = 3'b011;
+    #1;
+    $display("EN=%b  A=%b (%0d)  ->  D=%b", enable, A, A, D);
+
+    // ---- Vector 5 ----
+    enable = 1'b1;
+    {A2,A1,A0} = 3'b111;
+    #1;
+    $display("EN=%b  A=%b (%0d)  ->  D=%b", enable, A, A, D);
+
+    #1 $finish;
+  end
+endmodule
