@@ -14,17 +14,17 @@ module decoder2(X0, X1, enable, Y0, Y1, Y2, Y3);
 endmodule
 
 // 3x8 decoder module using two 2x4 decoder modules
-module decoder3(A0, A1, D0, D1, D2, D3, D4, D5, D6, D7, enable);
-  input A0, A1, enable;
+module decoder3(A0, A1, A2,D0, D1, D2, D3, D4, D5, D6, D7);
+  input A0, A1, A2;
   output D0, D1, D2, D3, D4, D5, D6, D7;
   wire wire3;
   
-  not GA(wire3, enable);
+  not GA(wire3, A2);
   
   // Lower 4 outputs enabled when A2=0
   decoder2 HA(A0, A1, wire3, D0, D1, D2, D3);
   
   // Upper 4 outputs enabled when A2=1
-  decoder2 IA(A0, A1, enable, D4, D5, D6, D7);
+  decoder2 IA(A0, A1, A2, D4, D5, D6, D7);
 endmodule
 
