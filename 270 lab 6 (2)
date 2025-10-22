@@ -11,6 +11,7 @@ module decoder2(X0, X1, enable, Y0, Y1, Y2, Y3);
   and DA(Y1, wire2, X0, enable);
   and EA(Y2, wire1, X1, enable);
   and FA(Y3, X0, X1, enable);
+  
 endmodule
 
 // 3x8 decoder module using two 2x4 decoder modules
@@ -26,6 +27,7 @@ module decoder3(A0, A1, A2,D0, D1, D2, D3, D4, D5, D6, D7);
   
   // Upper 4 outputs enabled when A2=1
   decoder2 IA(A0, A1, A2, D4, D5, D6, D7);
+  
 endmodule
 
 module ssd_hex(
@@ -54,4 +56,19 @@ module ssd_hex(
 	 		4'b1111: SevenSeg = 7'b0001110; //F
 		endcase
 	end
+  
+endmodule
+
+module ssdd(
+  	input  A0, A1, A2,
+  	output D0, D1, D2, D3, D4, D5, D6, D7,
+  	output [6:0] SevenSeg
+	);
+  
+  	decoder3 JA (A0, A1, A2, D0, D1, D2, D3, D4, D5, D6, D7);
+  	
+  	wire [3:0] Num = {1'b0, A2, A1, A0};
+  
+  	ssd_hex KA(.Num(Num), .SevenSeg(SevenSeg));
+ 
 endmodule
