@@ -19,19 +19,18 @@ module full_adder (A, B, Cin, Sum, Cout);
 endmodule
 
 
-// 4-bit Ripple Carry Adder
+// 3-bit Ripple Carry Adder
 module adder4 (A, B, Cin, Sum);
-  input  [3:0] A, B;
+  input  [2:0] A, B;
   input        Cin;
-  output [3:0] Sum;
+  output [2:0] Sum;
 
-  wire C1, C2, C3;   // intermediate carries
+  wire C1, C2;   // intermediate carries
 
   // Instantiate 4 full adders
   full_adder FA0 (A[0], B[0], Cin,  Sum[0], C1);
   full_adder FA1 (A[1], B[1], C1,   Sum[1], C2);
-  full_adder FA2 (A[2], B[2], C2,   Sum[2], C3);
-  full_adder FA3 (A[3], B[3], C3,   Sum[3], Cout);
+  full_adder FA2 (A[2], B[2], C2,   Sum[2], Cout);
 endmodule
 
 
@@ -45,17 +44,16 @@ module full_subtractor(A, B, Bin, Diff, Bout);
 endmodule
 
 
-module sub4(A, B, Bin, Diff, Bout);
-  input  [3:0] A, B;
+module sub3(A, B, Bin, Diff, Bout);
+  input  [2:0] A, B;
   input        Bin;       // initial borrow-in (often 0)
-  output [3:0] Diff;
+  output [2:0] Diff;
 
   wire b1, b2, b3;
 
   full_subtractor FS0(A[0], B[0], Bin, Diff[0], b1);
   full_subtractor FS1(A[1], B[1], b1,  Diff[1], b2);
-  full_subtractor FS2(A[2], B[2], b2,  Diff[2], b3);
-  full_subtractor FS3(A[3], B[3], b3,  Diff[3], Bout);
+  full_subtractor FS2(A[2], B[2], b2,  Diff[2], Bout);
 endmodule
 
 
@@ -70,17 +68,20 @@ module lab7(
 
   input a,a2,b,b2,c;
   output D0, D1, D2, D3, D4, D5, D6, D7;
-  wire
+  wire eq1,eq2,gt1,gt2,lt1,lt2,Num1,Num2,Num3;
 
   compare3 AA(eq1,gt1,lt1,a,c);
   compare3 AB(eq2,gt2,lt2,b,c);
 
   always @(*) begin
     if (gt1>0 && gt2>0)
-        adder4(Num1,a,b);
+        adder3 BA(Num1,a2,b2);
     else if (gt1<0 && gt2>0)
-        sub4
-    else
+        sub3 BB(Num2,a2,b2);
+    else if (gt1>0 && gt2<0)
+        sub3 BC(Num3,a2,b2);
+    else if (gt1<0 && gt2<0)
+        adder3 BD(Num3,a2,b2)
   end
 
   
