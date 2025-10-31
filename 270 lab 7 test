@@ -1,0 +1,67 @@
+`timescale 1ns/1ps
+
+module testbench();
+  // Inputs to DUT
+  reg  signed [3:0] a, b;
+
+  // Outputs from DUT
+  wire [7:0] SevenSeg;
+  wire       signFlag;  // 1 = positive/zero, 0 = negative
+
+  // Device Under Test — named ports
+  lab7 UUT (
+    .a(a), .b(b),
+    .SevenSeg(SevenSeg),
+    .signFlag(signFlag)
+  );
+
+  initial begin
+    // Wave dump
+    $dumpfile("dump.vcd");
+    $dumpvars(0);
+
+    // ---- Vector 1 (++) -> add ----
+    a = 4'sb0011;  // +3
+    b = 4'sb0001;  // +1
+    #1;
+    $display("a=%b  b=%b  -> SevenSeg=%b  Sign=%b", a, b, SevenSeg, signFlag);
+
+    // ---- Vector 2 (-+) -> sub ----
+    a = 4'sb1110;  // -2
+    b = 4'sb0010;  // +2
+    #1;
+    $display("a=%b  b=%b  -> SevenSeg=%b  Sign=%b", a, b, SevenSeg, signFlag);
+
+    // ---- Vector 3 (-+) -> sub (negative result) ----
+    a = 4'sb1101;  // -3
+    b = 4'sb0011;  // +3
+    #1;
+    $display("a=%b  b=%b  -> SevenSeg=%b  Sign=%b", a, b, SevenSeg, signFlag);
+
+    // ---- Vector 4 (+-) -> sub ----
+    a = 4'sb0100;  // +4
+    b = 4'sb1111;  // -1
+    #1;
+    $display("a=%b  b=%b  -> SevenSeg=%b  Sign=%b", a, b, SevenSeg, signFlag);
+
+    // ---- Vector 5 (--) -> add ----
+    a = 4'sb1101;  // -3
+    b = 4'sb1110;  // -2
+    #1;
+    $display("a=%b  b=%b  -> SevenSeg=%b  Sign=%b", a, b, SevenSeg, signFlag);
+
+    // ---- Vector 6 (++) boundary: a2=111, b2=000 internally -> 7+0 ----
+    a = 4'sb0111;  // +7
+    b = 4'sb0000;  //  0
+    #1;
+    $display("a=%b  b=%b  -> SevenSeg=%b  Sign=%b", a, b, SevenSeg, signFlag);
+
+    // ---- Vector 7 (+-) small sub: a2=001, b2=010 internally -> 1-2 ----
+    a = 4'sb0001;  // +1
+    b = 4'sb1110;  // -2
+    #1;
+    $display("a=%b  b=%b  -> SevenSeg=%b  Sign=%b", a, b, SevenSeg, signFlag);
+
+    #1 $finish;  // End simulation
+  end
+endmodule
