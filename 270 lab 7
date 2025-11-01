@@ -22,40 +22,6 @@ module adder3 (A, B, Cin, Sum, Cout);
 endmodule
 
 
-// 1-bit Full Subtractor
-module full_subtractor(A, B, Bin, Diff, Bout);
-  input  A, B, Bin;
-  output Diff, Bout;
-
-  assign Diff = A ^ B ^ Bin;                      
-  assign Bout = (~A & B) | (Bin & ~(A ^ B));      
-endmodule
-
-
-// 3-bit Subtractor
-module sub3(A, B, Bin, Diff, Bout);
-  input  [2:0] A, B;
-  input        Bin;
-  output [2:0] Diff;
-  output       Bout;
-
-  wire b1, b2;
-  full_subtractor FS0(A[0], B[0], Bin, Diff[0], b1);
-  full_subtractor FS1(A[1], B[1], b1,  Diff[1], b2);
-  full_subtractor FS2(A[2], B[2], b2,  Diff[2], Bout);
-endmodule
-
-
-// 3-bit Comparator
-module compare3(A, B, eq, gt, lt);
-  input  [2:0] A, B;
-  output eq, gt, lt;
-
-  assign eq = (A == B);
-  assign gt = (A >  B);
-  assign lt = (A <  B);
-endmodule
-
 
 // 4-bit Binary to 8-bit Seven Segment
 module Binary2Eight(
@@ -86,55 +52,8 @@ module Binary2Eight(
 endmodule
 
 
+// Main Lab7 (add a and b)
 
-// Helper: 3-bit 2's complement -> 4-bit signed (sign-extend)
-module tc3_to_s4(
-  input  [2:0] x,           // 3-bit 2's complement
-  output signed [3:0] y     // 4-bit signed, sign-extended
-);
-  assign y = { {1{x[2]}}, x };
-endmodule
-
-// Main Lab7 (a2,b2 generated internally from a,b)
-module lab7(
-  input  signed [3:0] a,
-  input  signed [3:0] b,
-  output        [7:0] SevenSeg,
-  output reg           signFlag
-);
-  // Derive 3-bit slices from a and b (their lower bits)
-  wire [2:0] a2 = a[2:0];
-  wire [2:0] b2 = b[2:0];
-
-  // Convert 3-bit 2's complement to 4-bit signed
-  wire signed [3:0] A2_ext, B2_ext;
-  tc3_to_s4 conv_a2 (.x(a2), .y(A2_ext));
-  tc3_to_s4 conv_b2 (.x(b2), .y(B2_ext));
-
-  // Signed arithmetic
-  wire signed [4:0] sum_ab  = A2_ext + B2_ext;
-  wire signed [4:0] diff_ab = A2_ext - B2_ext;
-
-  // Select based on a,b signs
-  reg signed [4:0] num_r;
-  always @(*) begin
-    if (a > 0 && b > 0) begin
-      num_r    = sum_ab;
-      signFlag = (num_r >= 0);
-    end
-    else if (a < 0 && b > 0) begin
-      num_r    = diff_ab;
-      signFlag = (num_r >= 0);
-    end
-    else if (a > 0 && b < 0) begin
-      num_r    = diff_ab;
-      signFlag = (num_r >= 0);
-    end
-    else begin
-      num_r    = sum_ab;
-      signFlag = (num_r >= 0);
-    end
-  end
 
   // Drive seven-segment output with 4-bit result
   Binary2Eight display_inst (num_r[3:0], SevenSeg);
