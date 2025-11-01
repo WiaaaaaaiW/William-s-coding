@@ -1,19 +1,20 @@
+`timescale 1ns/1ps
+
 // 1-bit Full Adder
 module full_adder (A, B, Cin, Sum, Cout);
-  input A, B, Cin;
-  output Sum, Cout;
+  input  wire A, B, Cin;
+  output wire Sum, Cout;
 
-  assign Sum  = A ^ B ^ Cin;                      // XOR for sum
-  assign Cout = (A & B) | (B & Cin) | (A & Cin);  // Carry logic
+  assign Sum  = A ^ B ^ Cin;
+  assign Cout = (A & B) | (B & Cin) | (A & Cin);
 endmodule
-
 
 // 4-bit Ripple Carry Adder
 module adder4 (A, B, Cin, Sum, Cout);
-  input  [3:0] A, B;
-  input  Cin;
-  output [3:0] Sum;
-  output Cout;
+  input  wire [3:0] A, B;
+  input  wire       Cin;
+  output wire [3:0] Sum;
+  output wire       Cout;
 
   wire C1, C2, C3;
 
@@ -23,11 +24,10 @@ module adder4 (A, B, Cin, Sum, Cout);
   full_adder FA3 (A[3], B[3], C3,  Sum[3], Cout);
 endmodule
 
-
-// 4-bit Binary to 8-bit Seven Segment
+// 4-bit Binary to 8-bit Seven Segment (active-low)
 module Binary2Eight(
-  input [3:0] Num,
-  output reg [7:0] SevenSeg
+  input  wire [3:0] Num,
+  output reg  [7:0] SevenSeg
 );
   always @(*) begin
     case (Num)
@@ -39,7 +39,7 @@ module Binary2Eight(
       4'b0101: SevenSeg = 8'b10010010; //  5
       4'b0110: SevenSeg = 8'b10000010; //  6
       4'b0111: SevenSeg = 8'b11111000; //  7
-      4'b1000: SevenSeg = 8'b00000000; // -8
+      4'b1000: SevenSeg = 8'b00000000; // -8 (your map)
       4'b1001: SevenSeg = 8'b01111000; // -7
       4'b1010: SevenSeg = 8'b00000010; // -6
       4'b1011: SevenSeg = 8'b00010010; // -5
@@ -47,40 +47,33 @@ module Binary2Eight(
       4'b1101: SevenSeg = 8'b00110000; // -3
       4'b1110: SevenSeg = 8'b00100100; // -2
       4'b1111: SevenSeg = 8'b01111001; // -1
-      default: SevenSeg = 8'b11111111; // Blank/Error
+      default: SevenSeg = 8'b11111111; // blank
     endcase
   end
 endmodule
 
-
-module Lab7 (
-  input  [3:0] A, B,        // 4-bit inputs (two’s complement)
-  input  Cin,               // Carry-in
-  output [3:0] Sum,         // 4-bit result
-  output Cout,              // Carry-out (overflow)
-  output [7:0] SevenSeg     // Seven-segment display
+// Top-level matching your testbench ports (no Cin, no signFlag)
+module lab7 (
+  input  wire signed [3:0] a,
+  input  wire signed [3:0] b,
+  output wire [7:0]        SevenSeg
 );
+  wire [3:0] sum;
+  wire       cout;
 
-  wire [3:0] num_r;         // 4-bit sum result
-
-  // Instantiate 4-bit ripple carry adder
+  // Correct named-port mapping (uppercase) and tie Cin to 0
   adder4 add_inst (
-    .A(A),
-    .B(B),
-    .Cin(Cin),
-    .Sum(num_r),
-    .Cout(Cout)
+    .A(a),
+    .B(b),
+    .Cin(1'b0),
+    .Sum(sum),
+    .Cout(cout)
   );
 
-  // Drive seven-segment output with result
   Binary2Eight display_inst (
-    .Num(num_r[3:0]),
+    .Num(sum),
     .SevenSeg(SevenSeg)
   );
-
-  // Output assignment
-  assign Sum = num_r;
-
 endmodule
 
 
