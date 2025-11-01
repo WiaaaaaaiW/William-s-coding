@@ -1,19 +1,26 @@
-`timescale 1ns/1ps
 
 module testbench();
-  // Inputs to DUT
-  reg  signed [3:0] a, b;
+  // ---------- Inputs to DUT ----------
+  reg  signed [3:0] a, b;     // 4-bit two's-complement operands
 
-  // Outputs from DUT
-  wire [7:0] SevenSeg;
-  wire       signFlag;  // 1 = positive/zero, 0 = negative
+  // ---------- Outputs from DUT ----------
+  wire [7:0] SevenSeg;        // 7-seg (active-low) pattern + DP bit
 
-  // Device Under Test — named ports
+  // ---------- Device Under Test ----------
+  // NOTE: Module name/ports must match your top module exactly.
   lab7 UUT (
-    .a(a), .b(b),
-    .SevenSeg(SevenSeg),
-    .signFlag(signFlag)
+    .a(a),
+    .b(b),
+    .SevenSeg(SevenSeg)
   );
+
+  // ---------- Utility: pretty print one vector ----------
+  task show(input [127:0] label);
+  begin
+    $display("%s  a=%b (%0d)  b=%b (%0d)  -> SevenSeg=%b",
+              label, a, a, b, b, SevenSeg);
+  end
+  endtask
 
   initial begin
     // Wave dump
@@ -23,45 +30,47 @@ module testbench();
     // ---- Vector 1 (++) -> add ----
     a = 4'sb0011;  // +3
     b = 4'sb0001;  // +1
-    #1;
-    $display("a=%b  b=%b  -> SevenSeg=%b  Sign=%b", a, b, SevenSeg, signFlag);
+    #1; show("V1  ( + + ) add  ");
 
     // ---- Vector 2 (-+) -> sub ----
     a = 4'sb1110;  // -2
     b = 4'sb0010;  // +2
-    #1;
-    $display("a=%b  b=%b  -> SevenSeg=%b  Sign=%b", a, b, SevenSeg, signFlag);
+    #1; show("V2  ( - + ) sub  ");
 
     // ---- Vector 3 (-+) -> sub (negative result) ----
     a = 4'sb1101;  // -3
     b = 4'sb0011;  // +3
-    #1;
-    $display("a=%b  b=%b  -> SevenSeg=%b  Sign=%b", a, b, SevenSeg, signFlag);
+    #1; show("V3  ( - + ) sub  ");
 
     // ---- Vector 4 (+-) -> sub ----
     a = 4'sb0100;  // +4
     b = 4'sb1111;  // -1
-    #1;
-    $display("a=%b  b=%b  -> SevenSeg=%b  Sign=%b", a, b, SevenSeg, signFlag);
+    #1; show("V4  ( + - ) sub  ");
 
     // ---- Vector 5 (--) -> add ----
     a = 4'sb1101;  // -3
     b = 4'sb1110;  // -2
-    #1;
-    $display("a=%b  b=%b  -> SevenSeg=%b  Sign=%b", a, b, SevenSeg, signFlag);
+    #1; show("V5  ( - - ) add  ");
 
-    // ---- Vector 6 (++) boundary: a2=111, b2=000 internally -> 7+0 ----
+    // ---- Vector 6 boundary: +7 + 0 ----
     a = 4'sb0111;  // +7
     b = 4'sb0000;  //  0
-    #1;
-    $display("a=%b  b=%b  -> SevenSeg=%b  Sign=%b", a, b, SevenSeg, signFlag);
+    #1; show("V6  ( + 0 ) add  ");
 
-    // ---- Vector 7 (+-) small sub: a2=001, b2=010 internally -> 1-2 ----
+    // ---- Vector 7 small sub: +1 + (-2) ----
     a = 4'sb0001;  // +1
     b = 4'sb1110;  // -2
-    #1;
-    $display("a=%b  b=%b  -> SevenSeg=%b  Sign=%b", a, b, SevenSeg, signFlag);
+    #1; show("V7  ( + - ) sub  ");
 
-    #1 $finish;  // End simulation
+    // ---- Extra edges you might want ----
+    a = 4'sb1000;  // -8
+    b = 4'sb0111;  // +7
+    #1; show("V8  ( - + ) edge ");
+
+    a = 4'sb1000;  // -8
+    b = 4'sb1000;  // -8
+    #1; show("V9  ( - - ) edge ");
+
+    #1 $finish;
   end
 endmodule
