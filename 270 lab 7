@@ -84,7 +84,8 @@ module lab7 (
   input  wire signed [3:0] a,
   input  wire signed [3:0] b,
   input  wire [1:0]        Din,
-  output reg  [7:0]        SevenSeg
+  output reg  [7:0]        SevenSeg,
+  output reg  [7:0]        SevenSeg2   // extra hex light
 );
   wire signed [3:0] sum_add;
   wire signed [3:0] diff_sub;
@@ -124,6 +125,14 @@ module lab7 (
 
   // Control logic based on Din
   always @(*) begin
+    // extra hex: show "1" only when a == b AND (a+b OR a-b) is out of range
+    if ( (a == b) &&
+         ( (sum_add > 7 || sum_add < -8) ||
+           (diff_sub > 7 || diff_sub < -8) ) )
+      SevenSeg2 = 8'b11111001; // digit 1 (active-low)
+    else
+      SevenSeg2 = 8'b11111111; // blank
+
     case (Din)
       2'b00: begin
         // reset -> show nothing
@@ -162,6 +171,7 @@ module lab7 (
     endcase
   end
 endmodule
+
 
 
 
