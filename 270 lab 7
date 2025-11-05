@@ -79,15 +79,15 @@ module Binary2Eight(
   end
 endmodule
 
-// Top-level with Cin control:
-// Cin = 00 -> reset (blank)
-// Cin = 01 -> 4-bit add  (a + b)
-// Cin = 10 -> 4-bit sub  (a - b)
-// Cin = 11 -> compare a, b
+// Top-level with Din control:
+// Din = 00 -> reset (blank)
+// Din = 01 -> 4-bit add  (a + b)
+// Din = 10 -> 4-bit sub  (a - b)
+// Din = 11 -> compare a, b
 module lab7 (
   input  wire signed [3:0] a,
   input  wire signed [3:0] b,
-  input  wire [1:0]        Cin,
+  input  wire [1:0]        Din,
   output reg  [7:0]        SevenSeg
 );
   wire signed [3:0] sum_add;
@@ -126,9 +126,9 @@ module lab7 (
     .SevenSeg(seg_sub)
   );
 
-  // Control logic based on Cin
+  // Control logic based on Din
   always @(*) begin
-    case (Cin)
+    case (Din)
       2'b00: begin
         // reset -> show nothing
         SevenSeg = 8'b11111111;
@@ -166,6 +166,7 @@ module lab7 (
     endcase
   end
 endmodule
+
 
 
 
