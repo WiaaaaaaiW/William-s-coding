@@ -79,11 +79,7 @@ module Binary2Eight(
   end
 endmodule
 
-// Top-level with Din control:
-// Din = 00 -> reset (blank)
-// Din = 01 -> 4-bit add  (a + b)
-// Din = 10 -> 4-bit sub  (a - b)
-// Din = 11 -> compare a, b
+
 module lab7 (
   input  wire signed [3:0] a,
   input  wire signed [3:0] b,
@@ -166,6 +162,7 @@ module lab7 (
     endcase
   end
 endmodule
+
 
 
 
