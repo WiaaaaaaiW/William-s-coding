@@ -24,6 +24,7 @@ module adder4 (A, B, Cin, Sum, Cout);
   full_adder FA3 (A[3], B[3], C3,  Sum[3], Cout);
 endmodule
 
+
 // 4-bit Binary to 8-bit Seven Segment (active-low)
 module Binary2Eight(
   input  wire signed [3:0] Num,
