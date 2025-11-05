@@ -24,11 +24,37 @@ module adder4 (A, B, Cin, Sum, Cout);
   full_adder FA3 (A[3], B[3], C3,  Sum[3], Cout);
 endmodule
 
+// 4-bit Ripple Carry Subtractor (A - B)
+module subtractor4 (
+  input  wire [3:0] A,     // Minuend
+  input  wire [3:0] B,     // Subtrahend
+  output wire [3:0] Diff,  // Difference = A - B
+  output wire       Bout   // Borrow out (1 means borrow occurred)
+);
+  wire [3:0] B_comp;
+  wire [3:0] Sum;
+  wire       Cout;
+
+  // Two's complement of B: ~B + 1
+  assign B_comp = ~B;
+
+  // A - B = A + (~B + 1)
+  adder4 sub_adder (
+    .A(A),
+    .B(B_comp),
+    .Cin(1'b1),
+    .Sum(Sum),
+    .Cout(Cout)
+  );
+
+  assign Diff = Sum;
+  assign Bout = ~Cout;  // Borrow out (optional)
+endmodule
 
 // 4-bit Binary to 8-bit Seven Segment (active-low)
 module Binary2Eight(
   input  wire signed [3:0] Num,
-  output reg  [7:0] SevenSeg
+  output reg  [7:0]        SevenSeg
 );
   always @(*) begin
     case (Num)
@@ -53,35 +79,93 @@ module Binary2Eight(
   end
 endmodule
 
-// Top-level: blanks display if sum outside -8..7 range
+// Top-level with Cin control:
+// Cin = 00 -> reset (blank)
+// Cin = 01 -> 4-bit add  (a + b)
+// Cin = 10 -> 4-bit sub  (a - b)
+// Cin = 11 -> compare a, b
 module lab7 (
   input  wire signed [3:0] a,
   input  wire signed [3:0] b,
-  output wire [7:0]        SevenSeg
+  input  wire [1:0]        Cin,
+  output reg  [7:0]        SevenSeg
 );
-  wire signed [3:0] sum;
-  wire              cout;
-  wire [7:0]        seg_internal;
+  wire signed [3:0] sum_add;
+  wire signed [3:0] diff_sub;
+  wire              cout_add;
+  wire              bout_sub;
+  wire [7:0]        seg_add;
+  wire [7:0]        seg_sub;
 
   // 4-bit adder
   adder4 add_inst (
     .A(a),
     .B(b),
     .Cin(1'b0),
-    .Sum(sum),
-    .Cout(cout)
+    .Sum(sum_add),
+    .Cout(cout_add)
   );
 
-  // Binary to 7-segment conversion
-  Binary2Eight display_inst (
-    .Num(sum),
-    .SevenSeg(seg_internal)
+  // 4-bit subtractor
+  subtractor4 sub_inst (
+    .A(a),
+    .B(b),
+    .Diff(diff_sub),
+    .Bout(bout_sub)
   );
 
-  // Show nothing if out of range (-8 to +7)
-  assign SevenSeg = (sum > 7 || sum < -8) ? 8'b11111111 : seg_internal;
+  // Binary to 7-segment for add result
+  Binary2Eight display_add (
+    .Num(sum_add),
+    .SevenSeg(seg_add)
+  );
+
+  // Binary to 7-segment for sub result
+  Binary2Eight display_sub (
+    .Num(diff_sub),
+    .SevenSeg(seg_sub)
+  );
+
+  // Control logic based on Cin
+  always @(*) begin
+    case (Cin)
+      2'b00: begin
+        // reset -> show nothing
+        SevenSeg = 8'b11111111;
+      end
+
+      2'b01: begin
+        // 4-bit adder, only if in range -8..7
+        if (sum_add > 7 || sum_add < -8)
+          SevenSeg = 8'b11111111;
+        else
+          SevenSeg = seg_add;
+      end
+
+      2'b10: begin
+        // 4-bit subtractor, only if in range -8..7
+        if (diff_sub > 7 || diff_sub < -8)
+          SevenSeg = 8'b11111111;
+        else
+          SevenSeg = seg_sub;
+      end
+
+      2'b11: begin
+        // Compare a and b
+        if (a > b)
+          SevenSeg = 8'b00010000; // A is bigger
+        else if (b > a)
+          SevenSeg = 8'b11000000; // B is bigger
+        else
+          SevenSeg = 8'b11111111; // equal -> blank
+      end
+
+      default: begin
+        SevenSeg = 8'b11111111;
+      end
+    endcase
+  end
 endmodule
-
 
 
 
