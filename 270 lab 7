@@ -125,22 +125,19 @@ module lab7 (
 
   // Control logic based on Din
   always @(*) begin
-    // extra hex: show "1" only when a == b AND (a+b OR a-b) is out of range
-    if ( (a == b) && ( (sum_add > 7 || sum_add < -8) || (diff_sub > 7 || diff_sub < -8) ) )
-      SevenSeg2 = 8'b11111001; // digit 1 (active-low)
-    else
-      SevenSeg2 = 8'b11111111; // blank
 
     case (Din)
       2'b00: begin
         // reset -> show nothing
         SevenSeg = 8'b11111111;
+        SevenSeg2 = 8'b11111111;
       end
 
       2'b01: begin
         // 4-bit adder, only if in range -8..7
         if (sum_add > 7 || sum_add < -8)
           SevenSeg = 8'b11111111;
+          SevenSeg2 = 8'b11111001; // digit 1 (active-low)
         else
           SevenSeg = seg_add;
       end
@@ -149,6 +146,7 @@ module lab7 (
         // 4-bit subtractor, only if in range -8..7
         if (diff_sub > 7 || diff_sub < -8)
           SevenSeg = 8'b11111111;
+          SevenSeg2 = 8'b11111001; // digit 1 (active-low)
         else
           SevenSeg = seg_sub;
       end
@@ -157,8 +155,10 @@ module lab7 (
         // Compare a and b
         if (a > b)
           SevenSeg = 8'b00010000; // A is bigger
+          SevenSeg2 = 8'b11111001; // digit 1 (active-low)
         else if (b > a)
           SevenSeg = 8'b11000000; // B is bigger
+          SevenSeg2 = 8'b11111001; // digit 1 (active-low)
         else
           SevenSeg = 8'b11111111; // equal -> blank
       end
