@@ -176,15 +176,21 @@ module lab7 (
       end
 
       2'b11: begin
-        // Compare a and b on SevenSeg2
-        if (a > b)
+        // Compare a and b:
+        // - Put "1" or "0" on SevenSeg2
+        // - Show the corresponding value (A or B) on SevenSeg
+        if (a > b) begin
           SevenSeg2 = 8'b11111001; // "1"
-          SevenSeg = Seg_a             // "pirnt value of A"  
-        else if (b > a)
+          SevenSeg  = seg_a;       // print value of A
+        end
+        else if (b > a) begin
           SevenSeg2 = 8'b11000000; // "0"
-          SevenSeg = Seg_b             // "print value of B"
-        else
+          SevenSeg  = seg_b;       // print value of B
+        end
+        else begin
           SevenSeg2 = 8'b11111111; // equal -> blank
+          SevenSeg  = 8'b11111111; // blank
+        end
       end
 
       default: begin
