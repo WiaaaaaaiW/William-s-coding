@@ -94,6 +94,21 @@ module lab7 (
   wire [7:0]        seg_add;
   wire [7:0]        seg_sub;
 
+  // Encoders for showing raw A and B in compare mode
+  wire [7:0] seg_a;
+  wire [7:0] seg_b;
+
+  Binary2Eight display_a (
+    .Num(a),
+    .SevenSeg(seg_a)
+  );
+
+  Binary2Eight display_b (
+    .Num(b),
+    .SevenSeg(seg_b)
+  );
+
+
   // 4-bit adder
   adder4 add_inst (
     .A(a),
@@ -164,8 +179,10 @@ module lab7 (
         // Compare a and b on SevenSeg2
         if (a > b)
           SevenSeg2 = 8'b11111001; // "1"
+          SevenSeg = Seg_a             // "pirnt value of A"  
         else if (b > a)
           SevenSeg2 = 8'b11000000; // "0"
+          SevenSeg = Seg_b             // "print value of B"
         else
           SevenSeg2 = 8'b11111111; // equal -> blank
       end
@@ -176,6 +193,7 @@ module lab7 (
     endcase
   end
 endmodule
+
 
 
 
