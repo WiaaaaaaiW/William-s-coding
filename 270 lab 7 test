@@ -1,24 +1,29 @@
+`timescale 1ns/1ps
 
 module testbench();
   // ---------- Inputs to DUT ----------
-  reg  signed [3:0] a, b;     // 4-bit two's-complement operands
+  reg  signed [3:0] a, b;    // 4-bit two's-complement operands
+  reg  [1:0]        Din;     // mode select
 
   // ---------- Outputs from DUT ----------
-  wire [7:0] SevenSeg;        // 7-seg (active-low) pattern + DP bit
+  wire [7:0] SevenSeg;       // main 7-seg (active-low)
+  wire [7:0] SevenSeg2;      // extra hex light (active-low)
 
   // ---------- Device Under Test ----------
   // NOTE: Module name/ports must match your top module exactly.
   lab7 UUT (
     .a(a),
     .b(b),
-    .SevenSeg(SevenSeg)
+    .Din(Din),
+    .SevenSeg(SevenSeg),
+    .SevenSeg2(SevenSeg2)
   );
 
   // ---------- Utility: pretty print one vector ----------
   task show(input [127:0] label);
   begin
-    $display("%s  a=%b (%0d)  b=%b (%0d)  -> SevenSeg=%b",
-              label, a, a, b, b, SevenSeg);
+    $display("%s  Din=%b  a=%b (%0d)  b=%b (%0d)  -> SevenSeg=%b  SevenSeg2=%b",
+              label, Din, a, a, b, b, SevenSeg, SevenSeg2);
   end
   endtask
 
@@ -27,50 +32,109 @@ module testbench();
     $dumpfile("dump.vcd");
     $dumpvars(0);
 
-    // ---- Vector 1 (++) -> add ----
+    // ============================================
+    // Din = 00 : reset/blank
+    // ============================================
+    Din = 2'b00;
+
+    // ---- Vector 1: idle/blank ----
+    a = 4'sb0000;  b = 4'sb0000;
+    #1; show("V1  ( idle )     ");
+
+    // ============================================
+    // Din = 01 : ADD (show only if -8..+7)
+    // ============================================
+    Din = 2'b01;
+
+    // ---- Vector 2 (++) in-range: 3 + 1 = 4 ----
     a = 4'sb0011;  // +3
     b = 4'sb0001;  // +1
-    #1; show("V1  ( + + ) add  ");
+    #1; show("V2  ( + + ) add  ");
 
-    // ---- Vector 2 (-+) -> sub ----
+    // ---- Vector 3 (-+) in-range: -2 + 2 = 0 ----
     a = 4'sb1110;  // -2
     b = 4'sb0010;  // +2
-    #1; show("V2  ( - + ) sub  ");
+    #1; show("V3  ( - + ) add  ");
 
-    // ---- Vector 3 (-+) -> sub (negative result) ----
-    a = 4'sb1101;  // -3
+    // ---- Vector 4 overflow: 7 + 3 = 10 -> blank ----
+    a = 4'sb0111;  // +7
     b = 4'sb0011;  // +3
-    #1; show("V3  ( - + ) sub  ");
+    #1; show("V4  ( + + ) OF   ");
 
-    // ---- Vector 4 (+-) -> sub ----
+    // ---- Vector 5 edge low: -8 + 0 = -8 in-range ----
+    a = 4'sb1000;  // -8
+    b = 4'sb0000;  //  0
+    #1; show("V5  ( - 0 ) add  ");
+
+    // ============================================
+    // Din = 10 : SUB (show only if -8..+7)
+    // ============================================
+    Din = 2'b10;
+
+    // ---- Vector 6 (+-) in-range: 4 - (-1) = 5 ----
     a = 4'sb0100;  // +4
     b = 4'sb1111;  // -1
-    #1; show("V4  ( + - ) sub  ");
+    #1; show("V6  ( + - ) sub  ");
 
-    // ---- Vector 5 (--) -> add ----
+    // ---- Vector 7 (-+) in-range: -3 - (+3) = -6 ----
     a = 4'sb1101;  // -3
-    b = 4'sb1110;  // -2
-    #1; show("V5  ( - - ) add  ");
+    b = 4'sb0011;  // +3
+    #1; show("V7  ( - + ) sub  ");
 
-    // ---- Vector 6 boundary: +7 + 0 ----
-    a = 4'sb0111;  // +7
-    b = 4'sb0000;  //  0
-    #1; show("V6  ( + 0 ) add  ");
-
-    // ---- Vector 7 small sub: +1 + (-2) ----
-    a = 4'sb0001;  // +1
-    b = 4'sb1110;  // -2
-    #1; show("V7  ( + - ) sub  ");
-
-    // ---- Extra edges you might want ----
+    // ---- Vector 8 underflow: -8 - 3 = -11 -> blank ----
     a = 4'sb1000;  // -8
-    b = 4'sb0111;  // +7
-    #1; show("V8  ( - + ) edge ");
+    b = 4'sb0011;  // +3
+    #1; show("V8  ( - + ) UF   ");
 
+    // ============================================
+    // Din = 11 : COMPARE (custom glyphs/blank)
+    // ============================================
+    Din = 2'b11;
+
+    // ---- Vector 9: a > b ----
+    a = 4'sb0110;  // +6
+    b = 4'sb1110;  // -2
+    #1; show("V9  (a>b) cmp    ");
+
+    // ---- Vector 10: b > a ----
+    a = 4'sb1001;  // -7
+    b = 4'sb0001;  // +1
+    #1; show("V10 (b>a) cmp    ");
+
+    // ---- Vector 11: a == b -> blank ----
+    a = 4'sb1010;  // -6
+    b = 4'sb1010;  // -6
+    #1; show("V11 (a=b) cmp    ");
+
+    // ============================================
+    // Special: SevenSeg2 shows digit "1"
+    // Condition: (a == b) AND ((a+b) OR (a-b)) out of range
+    // For a==b, diff_sub = 0; use overflow of a+b
+    // ============================================
+    Din = 2'b01; // ADD mode (display will blank on overflow; SevenSeg2 should light "1")
+
+    // ---- Vector 12: 7 + 7 = 14 -> overflow, SevenSeg2="1" ----
+    a = 4'sb0111;  // +7
+    b = 4'sb0111;  // +7
+    #1; show("V12 (a=b OF)     ");
+
+    // ---- Vector 13: -8 + -8 = -16 -> overflow, SevenSeg2="1" ----
     a = 4'sb1000;  // -8
     b = 4'sb1000;  // -8
-    #1; show("V9  ( - - ) edge ");
+    #1; show("V13 (a=b OF)     ");
+
+    // ============================================
+    // Few more edges
+    // ============================================
+    // In-range add: 7 + (-8) = -1
+    a = 4'sb0111;  b = 4'sb1000;  Din = 2'b01;
+    #1; show("V14 edge inrng   ");
+
+    // In-range sub: 0 - (-8) = +8 (out of display range -> blank)
+    a = 4'sb0000;  b = 4'sb1000;  Din = 2'b10;
+    #1; show("V15 sub edge     ");
 
     #1 $finish;
   end
 endmodule
+
