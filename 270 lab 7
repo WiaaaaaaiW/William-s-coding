@@ -123,47 +123,60 @@ module lab7 (
     .SevenSeg(seg_sub)
   );
 
+    // --- Add these wires in declarations ---
+  wire ov_add;
+  wire ov_sub;
+
+  // --- Overflow detection (signed) ---
+  assign ov_add = (a[3] == b[3]) && (sum_add[3] != a[3]);      // a + b
+  assign ov_sub = (a[3] != b[3]) && (diff_sub[3] != a[3]);     // a - b
+
   // Control logic based on Din
   always @(*) begin
+    // defaults (blank both to avoid latches)
+    SevenSeg  = 8'b11111111;
+    SevenSeg2 = 8'b11111111;
 
     case (Din)
       2'b00: begin
-        // reset -> show nothing
-        SevenSeg2 = 8'b11111111;
+        // reset -> blank (defaults already set)
       end
 
       2'b01: begin
-        // 4-bit adder, only if in range -8..7
-        if (sum_add > 7 || sum_add < -8)
-          SevenSeg2 = 8'b11111001; // digit 1 (active-low)
-        else
-          SevenSeg = seg_add;
+        // ADD: show digit when no overflow, otherwise light "1" on SevenSeg2
+        if (ov_add) begin
+          SevenSeg2 = 8'b11111001; // "1" active-low = overflow
+        end else begin
+          SevenSeg  = seg_add;
+        end
       end
 
       2'b10: begin
-        // 4-bit subtractor, only if in range -8..7
-        if (diff_sub > 7 || diff_sub < -8)
-          SevenSeg2 = 8'b11111001; // digit 1 (active-low)
-        else
-          SevenSeg = seg_sub;
+        // SUB: show digit when no overflow, otherwise light "1" on SevenSeg2
+        if (ov_sub) begin
+          SevenSeg2 = 8'b11111001; // "1" active-low = overflow
+        end else begin
+          SevenSeg  = seg_sub;
+        end
       end
 
       2'b11: begin
-        // Compare a and b
+        // Compare a and b on SevenSeg2
         if (a > b)
-          SevenSeg2 = 8'b11111001; // digit 1 (active-low)
+          SevenSeg2 = 8'b11111001; // "1"
         else if (b > a)
-          SevenSeg2 = 8'b11000000; // digit 0 (active-low)
+          SevenSeg2 = 8'b11000000; // "0"
         else
           SevenSeg2 = 8'b11111111; // equal -> blank
       end
 
       default: begin
-        SevenSeg = 8'b11111111;
+        // keep blanks
       end
     endcase
   end
 endmodule
+
 
 
 
