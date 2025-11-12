@@ -126,9 +126,7 @@ module lab7 (
   // Control logic based on Din
   always @(*) begin
     // extra hex: show "1" only when a == b AND (a+b OR a-b) is out of range
-    if ( (a == b) &&
-         ( (sum_add > 7 || sum_add < -8) ||
-           (diff_sub > 7 || diff_sub < -8) ) )
+    if ( (a == b) && ( (sum_add > 7 || sum_add < -8) || (diff_sub > 7 || diff_sub < -8) ) )
       SevenSeg2 = 8'b11111001; // digit 1 (active-low)
     else
       SevenSeg2 = 8'b11111111; // blank
