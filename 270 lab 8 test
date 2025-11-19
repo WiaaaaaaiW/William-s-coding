@@ -1,0 +1,41 @@
+module test;
+  reg clk, reset, select;
+  wire [3:0] q;
+  wire [6:0] ssd;
+
+  // Instantiate the Counter module
+  Counter T(clk, reset, select, q, ssd);
+
+  initial begin
+    // waveform dump for GTKWave
+    $dumpfile("dump.vcd");
+    $dumpvars(0, test);
+
+    // initial values
+    clk = 1'b0;
+
+    // Test 1: Count up (select=1)
+    reset = 1'b1;
+    select = 1'b1;
+    #10 reset = 1'b0;
+    #100;
+
+    // Test 2: Count down (select=0)
+    reset = 1'b1;
+    select = 1'b0;
+    #10 reset = 1'b0;
+    #100;
+
+    // Test 3: Count down again
+    reset = 1'b1;
+    select = 1'b0;
+    #10 reset = 1'b0;
+    #100;
+
+    $finish;
+  end
+
+  // Clock generator (toggles every 5 time units)
+  always #5 clk = ~clk;
+
+endmodule
