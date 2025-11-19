@@ -48,3 +48,29 @@ module Binary2Eight(
     endcase
   end
 endmodule
+
+module Tff(
+    input  wire clk_1,   // clock
+    input  wire T,       // T input
+    output reg  Q,       // Q
+    output wire Q_bar    // Q'
+    );
+
+    assign Q_bar = ~Q;
+
+    // T flip-flop: edge-triggered
+    always @(posedge clk_1) begin
+        if (T == 0) begin
+            // hold state
+            Q <= Q;
+        end
+
+        if (T == 1) begin
+            if (Q == 0) begin
+                Q <= 1;
+            end else begin
+                Q <= 0;
+            end
+        end
+    end
+endmodule
