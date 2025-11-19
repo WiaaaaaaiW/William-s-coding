@@ -20,3 +20,31 @@ module clock(
         end
     end
 endmodule
+
+// 4-bit Binary to 8-bit Seven Segment (active-low)
+module Binary2Eight(
+  input  wire signed [3:0] Num,
+  output reg  [7:0]        SevenSeg
+);
+  always @(*) begin
+    case (Num)
+      4'sb0000: SevenSeg = 8'b11000000; //  0
+      4'sb0001: SevenSeg = 8'b11111001; //  1
+      4'sb0010: SevenSeg = 8'b10100100; //  2
+      4'sb0011: SevenSeg = 8'b10110000; //  3
+      4'sb0100: SevenSeg = 8'b10011001; //  4
+      4'sb0101: SevenSeg = 8'b10010010; //  5
+      4'sb0110: SevenSeg = 8'b10000010; //  6
+      4'sb0111: SevenSeg = 8'b11111000; //  7
+      4'sb1000: SevenSeg = 8'b00000000; // -8
+      4'sb1001: SevenSeg = 8'b01111000; // -7
+      4'sb1010: SevenSeg = 8'b00000010; // -6
+      4'sb1011: SevenSeg = 8'b00010010; // -5
+      4'sb1100: SevenSeg = 8'b00011001; // -4
+      4'sb1101: SevenSeg = 8'b00110000; // -3
+      4'sb1110: SevenSeg = 8'b00100100; // -2
+      4'sb1111: SevenSeg = 8'b01111001; // -1
+      default:  SevenSeg = 8'b11111111; // blank
+    endcase
+  end
+endmodule
