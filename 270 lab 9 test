@@ -1,76 +1,78 @@
 module test;
     reg clk, C25, C50, reset;
-    wire f;
-    wire Ch;
-    wire [3:0] ssd;
+    wire f;          // food
+    wire Ch;         // change
+    wire [1:0] ssd;  // state from FSM (00,01,10)
 
-    // instantiate the counter / FSM
-    myFSM T(clk, C25, C50, reset, f, Ch, ssd);
+    // instantiate the vending_fsm (matches previous code)
+    vending_fsm T (
+        .clk    (clk),
+        .reset  (reset),
+        .coin25 (C25),
+        .coin50 (C50),
+        .food   (f),
+        .change (Ch),
+        .state  (ssd)
+    );
 
     initial begin
         $dumpfile("dump.vcd");
-        //$dumpvars(1,test);      // show top level wave
-        $dumpvars(0,test);        // show all level wave
+        $dumpvars(0, test);   // show all signals
 
-        clk   = 1'b0;             // set clk to 0
-        reset = 1'b0;             // reset to low, start counting
+        clk   = 1'b0;
+        reset = 1'b0;
         #1
-        reset = 1'b1;             // reset to low, start counting
+        reset = 1'b1;         // reset pulse
         C25   = 1'b0;
         C50   = 1'b0;
         #2
-        reset = 1'b0;             // reset to low, start counting
+        reset = 1'b0;
 
         #1 // wait
 
-        //--------------------------
         // 1st order: 25 + 50
-        //--------------------------
-        C25 = 1'b1;   // reset to high
-        #2
-        C25 = 1'b0;   // reset to high
-        #2 // wait
+        C25 = 1'b1;
+        #2;
+        C25 = 1'b0;
+        #2; // wait
 
-        C50 = 1'b1;   // reset to high
-        #2
-        C50 = 1'b0;   // reset to high
-        #2 // wait
+        C50 = 1'b1;
+        #2;
+        C50 = 1'b0;
+        #2; // wait
 
-        //--------------------------
         // 2nd order: 50 + 50
-        //--------------------------
-        C50 = 1'b1;   // reset to high
-        #2
-        C50 = 1'b0;   // reset to high
-        #2 // wait
+        C50 = 1'b1;
+        #2;
+        C50 = 1'b0;
+        #2; // wait
 
-        C50 = 1'b1;   // reset to high
-        #2
-        C50 = 1'b0;   // reset to high
-        #2 // wait
+        C50 = 1'b1;
+        #2;
+        C50 = 1'b0;
+        #2; // wait
 
-        //--------------------------
         // 3rd order: 25 + 25 + 25
-        //--------------------------
-        C25 = 1'b1;   // reset to high
-        #2
-        C25 = 1'b0;   // reset to high
-        #2 // wait
+        C25 = 1'b1;
+        #2;
+        C25 = 1'b0;
+        #2; // wait
 
-        C25 = 1'b1;   // reset to high
-        #2
-        C25 = 1'b0;   // reset to high
-        #2 // wait
+        C25 = 1'b1;
+        #2;
+        C25 = 1'b0;
+        #2; // wait
 
-        C25 = 1'b1;   // reset to high
-        #2
-        C25 = 1'b0;   // reset to high
-        #2 // wait
+        C25 = 1'b1;
+        #2;
+        C25 = 1'b0;
+        #2; // wait
 
-        #4
+        #4;
         $finish;
     end
 
-    always #1 clk = ~clk;     // clock toggles every 1 time unit
+    always #1 clk = ~clk;   // clock changes every 1 time unit
 
 endmodule
+
