@@ -1,6 +1,3 @@
-//============================================================
-// 50 MHz -> 1 Hz divider (BOARD USE, not used in this sim)
-//============================================================
 module clock_divider(
     input clk,
     output reg new_clk
@@ -21,9 +18,6 @@ module clock_divider(
 endmodule
 
 
-//============================================================
-// Edge detection for pushbuttons (BOARD USE, not used in this sim)
-//============================================================
 module edge_detection
 (
     input clk1,
@@ -97,9 +91,6 @@ module edge_detection
 endmodule
 
 
-//============================================================
-// Vending FSM based on the 0/25/50-cent state table
-//============================================================
 module vending_fsm (
     input        clk,
     input        reset,
@@ -170,10 +161,6 @@ module vending_fsm (
 endmodule
 
 
-//============================================================
-// Wrapper that matches the EDAPlayground testbench:
-//   myFSM T(clk,C25,C50,reset,f,Ch,ssd);
-//============================================================
 module myFSM(
     input  wire clk,
     input  wire C25,
