@@ -1,36 +1,132 @@
-module myFSM(
-	input clk,
-	input cent_25,
-	input cent_50,
-	input reset,
-	output reg food,
-	output reg change,
-	output reg [3:0] stateDisplay
+// Mealy vending machine based on the state table
+module vending_fsm (
+    input        clk,        // 1 Hz clock (from clock_divider)
+    input        reset,      // synchronous reset (from new_reset)
+    input        coin25,     // new_cent_25 pulse
+    input        coin50,     // new_cent_50 pulse
+    output reg   food,
+    output reg   change,
+    output reg [1:0] state   // 00=S0, 01=S1, 10=S2
 );
 
-reg [1:0] state;
-parameter S0 = 2'b00,
-          S1 = 2'b01,
-			 S2 = 2'b10;
+    // State encoding
+    localparam S0 = 2'b00;   // 0 cents
+    localparam S1 = 2'b01;   // 25 cents
+    localparam S2 = 2'b10;   // 50 cents
 
-// Sequential Block: for transitioning to next state
-always @(posedge clk)
-begin
-    // Handle Reset Logic
-	
-	
-	 // Update next state depending on state
-end
+    reg [1:0] next_state;
 
+    // Next-state and outputs (combinational) – directly from the table
+    always @(*) begin
+        // defaults
+        next_state = state;
+        food       = 1'b0;
+        change     = 1'b0;
 
-// Combinational block: for output logic
-always @ *
-begin
-	stateDisplay <= state;
-	{change, food} <= 2'b00;
-	
-	// Update output depending on state
+        case (state)
+            S0: begin  // 00
+                if (coin25 && !coin50)       // 25=1, 50=0  -> S1, no outputs
+                    next_state = S1;
+                else if (!coin25 && coin50)  // 25=0, 50=1  -> S2, no outputs
+                    next_state = S2;
+                else if (!coin25 && !coin50) // 00 -> stay
+                    next_state = S0;
+                else begin                   // 25=1,50=1 -> X (ignore)
+                    next_state = S0;
+                end
+            end
 
-end
+            S1: begin  // 01 (25 cents)
+                if (!coin25 && !coin50)      // 00 -> stay
+                    next_state = S1;
+                else if (!coin25 && coin50) begin // +50 = 75 -> food, no change
+                    next_state = S0;
+                    food       = 1'b1;
+                    change     = 1'b0;
+                end
+                else if (coin25 && !coin50)  // +25 = 50 -> S2
+                    next_state = S2;
+                else begin                   // 11 -> X (ignore)
+                    next_state = S1;
+                end
+            end
+
+            S2: begin  // 10 (50 cents)
+                if (!coin25 && !coin50)      // 00 -> stay
+                    next_state = S2;
+                else if (!coin25 && coin50) begin // +50 = 100 -> food + 25c change
+                    next_state = S0;
+                    food       = 1'b1;
+                    change     = 1'b1;
+                end
+                else if (coin25 && !coin50) begin // +25 = 75 -> food, no change
+                    next_state = S0;
+                    food       = 1'b1;
+                    change     = 1'b0;
+                end
+                else begin                   // 11 -> X (ignore)
+                    next_state = S2;
+                end
+            end
+
+            default: begin
+                next_state = S0;
+            end
+        endcase
+    end
+
+    // State register
+    always @(posedge clk) begin
+        if (reset)
+            state <= S0;
+        else
+            state <= next_state;
+    end
+
+endmodule
+
+module vending_top (
+    input  wire clk_50M,     // board clock
+    input  wire btn_25,      // push button for 25 cents
+    input  wire btn_50,      // push button for 50 cents
+    input  wire btn_reset,   // reset button
+    output wire food,
+    output wire change,
+    output wire [1:0] state  // optional: current state
+);
+
+    // 1 Hz clock
+    wire clk_1hz;
+    clock_divider DIV (
+        .clk     (clk_50M),
+        .new_clk (clk_1hz)
+    );
+
+    // Edge detectors (your module)
+    wire new_cent_25;
+    wire new_cent_50;
+    wire new_reset;
+
+    edge_detection ED (
+        .clk1        (clk_50M),
+        .clk2        (clk_1hz),
+        .cent_25     (btn_25),
+        .cent_50     (btn_50),
+        .reset       (btn_reset),
+        .new_cent_25 (new_cent_25),
+        .new_cent_50 (new_cent_50),
+        .new_reset   (new_reset)
+    );
+
+    // Vending state machine
+    vending_fsm FSM (
+        .clk    (clk_1hz),
+        .reset  (new_reset),
+        .coin25 (new_cent_25),
+        .coin50 (new_cent_50),
+        .food   (food),
+        .change (change),
+        .state  (state)
+    );
 
 endmodule
