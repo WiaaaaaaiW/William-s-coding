@@ -1,3 +1,5 @@
+// Code your testbench here
+// or browse Examples
 module test;
   reg clk, reset, select;
   wire [3:0] q;
