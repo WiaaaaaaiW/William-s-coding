@@ -140,7 +140,7 @@ module vending_fsm (
     input        coin50,
     output reg   food,
     output reg   change,
-    output reg [1:0] state
+    output reg [1:0] state    // 00=S0, 01=S1, 10=S2
 );
 
     localparam S0 = 2'b00;   // 0 cents
@@ -150,43 +150,67 @@ module vending_fsm (
     reg [1:0] next_state;
 
     always @(*) begin
+        // defaults
         next_state = state;
-        food       = 1'b0;
-        change     = 1'b0;
+        food       = 0;
+        change     = 0;
 
-        case (state)
-            S0: begin
-                if (coin25 && !coin50)       next_state = S1;
-                else if (!coin25 && coin50)  next_state = S2;
-                else                         next_state = S0;
-            end
+        // invalid input: both coins inserted
+        if (coin25 && coin50) begin
+            next_state = state;  // ignore
+            food       = 0;
+            change     = 0;
+        end
+        else begin
+            case (state)
 
-            S1: begin
-                if (!coin25 && !coin50)      next_state = S1;
-                else if (!coin25 && coin50) begin
-                    next_state = S0;   // 25 + 50 = 75
-                    food       = 1;
-                    change     = 0;
+                //==========================================
+                // STATE 00 (0 cents)
+                //==========================================
+                S0: begin
+                    if (coin25)          next_state = S1;  // 25
+                    else if (coin50)     next_state = S2;  // 50
+                    else                 next_state = S0;  // no coin
                 end
-                else if (coin25 && !coin50)  next_state = S2; // 25+25=50
-                else                         next_state = S1;
-            end
 
-            S2: begin
-                if (!coin25 && !coin50)      next_state = S2;
-                else if (!coin25 && coin50) begin
-                    next_state = S0;   // 50 + 50 = 100
-                    food       = 1;
-                    change     = 1;
+                //==========================================
+                // STATE 01 (25 cents)
+                //==========================================
+                S1: begin
+                    if (!coin25 && !coin50)
+                        next_state = S1;                // stay
+                    else if (coin50) begin
+                        next_state = S0;                // 25 + 50 = 75
+                        food       = 1;
+                        change     = 0;
+                    end
+                    else if (coin25) begin
+                        next_state = S2;                // 25 + 25 = 50
+                    end
                 end
-                else if (coin25 && !coin50) begin
-                    next_state = S0;   // 50 + 25 = 75
-                    food       = 1;
-                    change     = 0;
+
+                //==========================================
+                // STATE 10 (50 cents)
+                //==========================================
+                S2: begin
+                    if (!coin25 && !coin50)
+                        next_state = S2;                // stay
+                    else if (coin50) begin
+                        next_state = S0;                // 50 + 50 = 100
+                        food       = 1;
+                        change     = 1;
+                    end
+                    else if (coin25) begin
+                        next_state = S0;                // 50 + 25 = 75
+                        food       = 1;
+                        change     = 0;
+                    end
                 end
-                else                         next_state = S2;
-            end
-        endcase
+
+                default: next_state = S0;
+
+            endcase
+        end
     end
 
     always @(posedge clk) begin
@@ -196,8 +220,6 @@ module vending_fsm (
             state <= next_state;
     end
 endmodule
-
-
 
 //========================================================
 // 5. Top-Level Wrapper
