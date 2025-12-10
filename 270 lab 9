@@ -1,16 +1,22 @@
+//========================================================
+// 1. Clock Divider (50MHz -> 1Hz)
+//========================================================
 module clock_divider(
-    input clk,
-    output reg new_clk
+    input  wire clk,
+    output reg  new_clk
 );
     reg [27:0] counter = 0;
-    always@(posedge clk) begin
+
+    always @(posedge clk) begin
         if(counter == 28'd25_000_000) begin
             counter <= counter + 1;
             new_clk <= 1;
-        end else if(counter == 28'd50_000_000) begin
+        end
+        else if(counter == 28'd50_000_000) begin
             counter <= 0;
             new_clk <= 0;
-        end else begin
+        end
+        else begin
             counter <= counter + 1;
             new_clk <= new_clk;
         end
@@ -18,30 +24,43 @@ module clock_divider(
 endmodule
 
 
-always@(*) // run when any input changes
-begin
-  case(Num)
-    4'b0000: SevenSeg = 7'b1000000; // 0
-    4'b0001: SevenSeg = 7'b1111001; // 1
-    4'b0010: SevenSeg = 7'b0100100; // 2
-    4'b0011: SevenSeg = 7'b0110000; // 3
-    4'b0100: SevenSeg = 7'b0011001; // 4
-    4'b0101: SevenSeg = 7'b0010010; // 5
-    4'b0110: SevenSeg = 7'b0000010; // 6
-    4'b0111: SevenSeg = 7'b1111000; // 7
-    4'b1000: SevenSeg = 7'b0000000; // 8
-    4'b1001: SevenSeg = 7'b0010000; // 9
-    4'b1010: SevenSeg = 7'b0001000; // A
-    4'b1011: SevenSeg = 7'b0000011; // B
-    4'b1100: SevenSeg = 7'b1000110; // C
-    4'b1101: SevenSeg = 7'b0100001; // D
-    4'b1110: SevenSeg = 7'b0000110; // E
-    4'b1111: SevenSeg = 7'b0001110; // F
-  endcase
-end
 
-endmodulemodule edge_detection
-(
+//========================================================
+// 2. 7-Segment Decoder
+//========================================================
+module sevenseg_decoder(
+    input  wire [3:0] Num,
+    output reg  [6:0] SevenSeg
+);
+
+    always @(*) begin
+        case(Num)
+            4'b0000: SevenSeg = 7'b1000000; // 0
+            4'b0001: SevenSeg = 7'b1111001; // 1
+            4'b0010: SevenSeg = 7'b0100100; // 2
+            4'b0011: SevenSeg = 7'b0110000; // 3
+            4'b0100: SevenSeg = 7'b0011001; // 4
+            4'b0101: SevenSeg = 7'b0010010; // 5
+            4'b0110: SevenSeg = 7'b0000010; // 6
+            4'b0111: SevenSeg = 7'b1111000; // 7
+            4'b1000: SevenSeg = 7'b0000000; // 8
+            4'b1001: SevenSeg = 7'b0010000; // 9
+            4'b1010: SevenSeg = 7'b0001000; // A
+            4'b1011: SevenSeg = 7'b0000011; // B
+            4'b1100: SevenSeg = 7'b1000110; // C
+            4'b1101: SevenSeg = 7'b0100001; // D
+            4'b1110: SevenSeg = 7'b0000110; // E
+            4'b1111: SevenSeg = 7'b0001110; // F
+        endcase
+    end
+endmodule
+
+
+
+//========================================================
+// 3. Edge Detection Module
+//========================================================
+module edge_detection(
     input clk1,
     input clk2,
     input cent_25,
@@ -54,65 +73,66 @@ endmodulemodule edge_detection
     reg reset_hold;
     reg cent_25_hold;
     reg cent_50_hold;
-    
+
     reg cent_25_hold_old;
     reg cent_50_hold_old;
     reg reset_hold_old;
-    
+
     reg cent_25_old;
     reg cent_50_old;
     reg reset_old;
-    
-    
-    always@(posedge clk1) begin
+
+
+    // Sync domain 1
+    always @(posedge clk1) begin
         reset_old <= reset;
-        if(reset_old == 1 & reset==0) begin
+        if(reset_old == 1 && reset == 0)
             reset_hold <= 1;
-        end else if (new_reset == 1) begin
+        else if(new_reset == 1)
             reset_hold <= 0;
-        end
-        
+
         cent_25_old <= cent_25;
-        if(cent_25_old == 1 & cent_25==0) begin
+        if(cent_25_old == 1 && cent_25 == 0)
             cent_25_hold <= 1;
-        end else if (new_cent_25 == 1) begin
+        else if(new_cent_25 == 1)
             cent_25_hold <= 0;
-        end
-        
+
         cent_50_old <= cent_50;
-        if(cent_50_old == 1 & cent_50==0) begin
+        if(cent_50_old == 1 && cent_50 == 0)
             cent_50_hold <= 1;
-        end else if (new_cent_50 == 1) begin
+        else if(new_cent_50 == 1)
             cent_50_hold <= 0;
-        end
     end
-    
-    always@(posedge clk2) begin
+
+
+    // Sync domain 2
+    always @(posedge clk2) begin
         cent_25_hold_old <= cent_25_hold;
         cent_50_hold_old <= cent_50_hold;
         reset_hold_old   <= reset_hold;
-        
-        if(cent_25_hold_old == 0 & cent_25_hold==1) begin
+
+        if(cent_25_hold_old == 0 && cent_25_hold == 1)
             new_cent_25 <= 1;
-        end else if (new_cent_25 == 1) begin
+        else if(new_cent_25 == 1)
             new_cent_25 <= 0;
-        end
-        
-        if(cent_50_hold_old == 0 & cent_50_hold==1) begin
+
+        if(cent_50_hold_old == 0 && cent_50_hold == 1)
             new_cent_50 <= 1;
-        end else if (new_cent_50 == 1) begin
+        else if(new_cent_50 == 1)
             new_cent_50 <= 0;
-        end
-        
-        if(reset_hold_old == 0 & reset_hold==1) begin
+
+        if(reset_hold_old == 0 && reset_hold == 1)
             new_reset <= 1;
-        end else if (new_reset == 1) begin
+        else if(new_reset == 1)
             new_reset <= 0;
-        end
     end
 endmodule
 
 
+
+//========================================================
+// 4. Vending Machine FSM
+//========================================================
 module vending_fsm (
     input        clk,
     input        reset,
@@ -120,7 +140,7 @@ module vending_fsm (
     input        coin50,
     output reg   food,
     output reg   change,
-    output reg [1:0] state    // 00=S0, 01=S1, 10=S2
+    output reg [1:0] state
 );
 
     localparam S0 = 2'b00;   // 0 cents
@@ -138,39 +158,34 @@ module vending_fsm (
             S0: begin
                 if (coin25 && !coin50)       next_state = S1;
                 else if (!coin25 && coin50)  next_state = S2;
-                else                         next_state = S0;  // 00 or 11 -> stay
+                else                         next_state = S0;
             end
 
             S1: begin
                 if (!coin25 && !coin50)      next_state = S1;
                 else if (!coin25 && coin50) begin
-                    // 25 + 50 = 75
-                    next_state = S0;
-                    food       = 1'b1;
-                    change     = 1'b0;
+                    next_state = S0;   // 25 + 50 = 75
+                    food       = 1;
+                    change     = 0;
                 end
                 else if (coin25 && !coin50)  next_state = S2; // 25+25=50
-                else                         next_state = S1; // 11 ignore
+                else                         next_state = S1;
             end
 
             S2: begin
                 if (!coin25 && !coin50)      next_state = S2;
                 else if (!coin25 && coin50) begin
-                    // 50 + 50 = 100 -> food + change
-                    next_state = S0;
-                    food       = 1'b1;
-                    change     = 1'b1;
+                    next_state = S0;   // 50 + 50 = 100
+                    food       = 1;
+                    change     = 1;
                 end
                 else if (coin25 && !coin50) begin
-                    // 50 + 25 = 75 -> food only
-                    next_state = S0;
-                    food       = 1'b1;
-                    change     = 1'b0;
+                    next_state = S0;   // 50 + 25 = 75
+                    food       = 1;
+                    change     = 0;
                 end
-                else                         next_state = S2; // 11 ignore
+                else                         next_state = S2;
             end
-
-            default: next_state = S0;
         endcase
     end
 
@@ -183,6 +198,10 @@ module vending_fsm (
 endmodule
 
 
+
+//========================================================
+// 5. Top-Level Wrapper
+//========================================================
 module myFSM(
     input  wire clk,
     input  wire C25,
@@ -192,6 +211,7 @@ module myFSM(
     output wire Ch,
     output wire [1:0] ssd
 );
+
     vending_fsm U (
         .clk    (clk),
         .reset  (reset),
