@@ -1,187 +1,182 @@
 //send the boards 50MHz clock to this and on the output will be 1Hz clock
-module clock(
-    input clk_50M,
-    output reg clk_1
+module clock_divider(
+	input clk,
+	output reg new_clk
 );
-    reg [27:0] counter = 0;
-    always@(posedge clk_50M)
-    begin
-        if(counter == 28'd25_000_000)
-        begin
-            counter <= counter + 1;
-            clk_1 <= 1;
-        end else if(counter == 28'd50_000_000)
-        begin
-            counter <= 0;
-            clk_1 <= 0;
-        end else begin
-            counter <= counter + 1;
-            clk_1 <= clk_1;
-        end
-    end
+	reg [27:0] counter = 0;
+	always@(posedge clk)
+	begin
+		if(counter == 28'd25_000_000)
+		begin
+			counter <= counter + 1;
+			new_clk <= 1;
+		end else if(counter == 28'd50_000_000)
+		begin
+			counter <= 0;
+			new_clk <= 0;
+		end else begin
+			counter <= counter + 1;
+			new_clk <= new_clk;
+		end
+	end
 endmodule
 
+//connect the push buttons of the boards to the input pins of this module and the output is what you will you to control your state machine
+//the clock that gets sent to this is the 1Hz clock that comes from the output above.
 
 module edge_detection
 (
-    input clk1,
-    input clk2,
+	input clk1,
+	input clk2,
+	input cent_25,
+	input cent_50,
+	input reset,
+	output reg new_cent_25,
+	output reg new_cent_50,
+	output reg new_reset
+);
+	reg reset_hold;
+	reg cent_25_hold;
+	reg cent_50_hold;
+	
+	reg cent_25_hold_old;
+	reg cent_50_hold_old;
+	reg reset_hold_old;
+	
+	reg cent_25_old;
+	reg cent_50_old;
+	reg reset_old;
+	
+	
+	always@(posedge clk1)
+	begin
+		reset_old <= reset;
+		if(reset_old == 1 & reset==0)
+		begin
+			reset_hold <= 1;
+		end else if (new_reset == 1)
+		begin
+			reset_hold <= 0;
+		end
+		
+		cent_25_old <= cent_25;
+		if(cent_25_old == 1 & cent_25==0)
+		begin
+			cent_25_hold <= 1;
+		end else if (new_cent_25 == 1)
+		begin
+			cent_25_hold <= 0;
+		end
+		
+		
+		cent_50_old <= cent_50;
+		if(cent_50_old == 1 & cent_50==0)
+		begin
+			cent_50_hold <= 1;
+		end else if (new_cent_50 == 1)
+		begin
+			cent_50_hold <= 0;
+		end
+	end
+	
+	always@(posedge clk2)
+    begin
+		cent_25_hold_old <= cent_25_hold;
+		cent_50_hold_old <= cent_50_hold;
+		reset_hold_old <= reset_hold;
+		
+		if(cent_25_hold_old == 0 & cent_25_hold==1)
+		begin
+			new_cent_25 <= 1;
+		end
+		else if (new_cent_25 == 1)
+		begin
+			new_cent_25 <= 0;
+		end
+		
+		if(cent_50_hold_old == 0 & cent_50_hold==1)
+		begin
+			new_cent_50 <= 1;
+		end
+		else if (new_cent_50 == 1)
+		begin
+			new_cent_50 <= 0;
+		end
+		
+		if(reset_hold_old == 0 & reset_hold==1)
+		begin
+			new_reset <= 1;
+		end
+		else if (new_reset == 1)
+		begin
+			new_reset <= 0;
+		end
+
+	end
+endmodule
+
+module myFSM(
+    input clk,
     input cent_25,
     input cent_50,
     input reset,
-    output reg new_cent_25,
-    output reg new_cent_50,
-    output reg new_reset
-);
-    reg reset_hold;
-    reg cent_25_hold;
-    reg cent_50_hold;
-    
-    reg cent_25_hold_old;
-    reg cent_50_hold_old;
-    reg reset_hold_old;
-    
-    reg cent_25_old;
-    reg cent_50_old;
-    reg reset_old;
-    
-    
-    always@(posedge clk1) begin
-        reset_old <= reset;
-        if(reset_old == 1 & reset==0) begin
-            reset_hold <= 1;
-        end else if (new_reset == 1) begin
-            reset_hold <= 0;
-        end
-        
-        cent_25_old <= cent_25;
-        if(cent_25_old == 1 & cent_25==0) begin
-            cent_25_hold <= 1;
-        end else if (new_cent_25 == 1) begin
-            cent_25_hold <= 0;
-        end
-        
-        cent_50_old <= cent_50;
-        if(cent_50_old == 1 & cent_50==0) begin
-            cent_50_hold <= 1;
-        end else if (new_cent_50 == 1) begin
-            cent_50_hold <= 0;
-        end
-    end
-    
-    always@(posedge clk2) begin
-        cent_25_hold_old <= cent_25_hold;
-        cent_50_hold_old <= cent_50_hold;
-        reset_hold_old   <= reset_hold;
-        
-        if(cent_25_hold_old == 0 & cent_25_hold==1) begin
-            new_cent_25 <= 1;
-        end else if (new_cent_25 == 1) begin
-            new_cent_25 <= 0;
-        end
-        
-        if(cent_50_hold_old == 0 & cent_50_hold==1) begin
-            new_cent_50 <= 1;
-        end else if (new_cent_50 == 1) begin
-            new_cent_50 <= 0;
-        end
-        
-        if(reset_hold_old == 0 & reset_hold==1) begin
-            new_reset <= 1;
-        end else if (new_reset == 1) begin
-            new_reset <= 0;
-        end
-    end
-endmodule
-
-
-module vending_fsm (
-    input        clk,
-    input        reset,
-    input        coin25,
-    input        coin50,
-    output reg   food,
-    output reg   change,
-    output reg [1:0] state    // 00=S0, 01=S1, 10=S2
+    output reg food,
+    output reg change,
+    output reg [3:0] stateDisplay
 );
 
-    localparam S0 = 2'b00;   // 0 cents
-    localparam S1 = 2'b01;   // 25 cents
-    localparam S2 = 2'b10;   // 50 cents
+reg [1:0] state;
+parameter S0 = 2'b00,
+          S1 = 2'b01,
+          S2 = 2'b10; // 50¢ holding state
 
-    reg [1:0] next_state;
+// Sequential Block: state transitions and synchronous outputs
+always @(posedge clk)
+begin
+    if (reset) begin
+        state <= S0;
+        food <= 0;
+        change <= 0;
+    end
+    else if (!(cent_25 & cent_50)) begin // ignore simultaneous input
+        // Default outputs
+        food <= 0;
+        change <= 0;
 
-    always @(*) begin
-        next_state = state;
-        food       = 1'b0;
-        change     = 1'b0;
-
-        case (state)
+        case(state)
             S0: begin
-                if (coin25 && !coin50)       next_state = S1;
-                else if (!coin25 && coin50)  next_state = S2;
-                else                         next_state = S0;  // 00 or 11 -> stay
+                if (cent_25)
+                    state <= S1;
+                else if (cent_50)
+                    state <= S2;
             end
-
             S1: begin
-                if (!coin25 && !coin50)      next_state = S1;
-                else if (!coin25 && coin50) begin
-                    // 25 + 50 = 75
-                    next_state = S0;
-                    food       = 1'b1;
-                    change     = 1'b0;
+                if (cent_25)
+                    state <= S2;           // 25+25=50
+                else if (cent_50) begin
+                    state <= S0;           // 25+50=75 → dispense
+                    food <= 1;
                 end
-                else if (coin25 && !coin50)  next_state = S2; // 25+25=50
-                else                         next_state = S1; // 11 ignore
             end
-
             S2: begin
-                if (!coin25 && !coin50)      next_state = S2;
-                else if (!coin25 && coin50) begin
-                    // 50 + 50 = 100 -> food + change
-                    next_state = S0;
-                    food       = 1'b1;
-                    change     = 1'b1;
+                if (cent_25) begin
+                    state <= S0;           // 50+25=75 → dispense
+                    food <= 1;
                 end
-                else if (coin25 && !coin50) begin
-                    // 50 + 25 = 75 -> food only
-                    next_state = S0;
-                    food       = 1'b1;
-                    change     = 1'b0;
+                else if (cent_50) begin
+                    state <= S0;           // 50+50=100 → dispense + change
+                    food <= 1;
+                    change <= 1;
                 end
-                else                         next_state = S2; // 11 ignore
             end
-
-            default: next_state = S0;
         endcase
     end
+end
 
-    always @(posedge clk) begin
-        if (reset)
-            state <= S0;
-        else
-            state <= next_state;
-    end
-endmodule
+// Optional: display current state on LEDs
+always @* begin
+    stateDisplay = state;
+end
 
-
-module myFSM(
-    input  wire clk,
-    input  wire C25,
-    input  wire C50,
-    input  wire reset,
-    output wire f,
-    output wire Ch,
-    output wire [1:0] ssd
-);
-    vending_fsm U (
-        .clk    (clk),
-        .reset  (reset),
-        .coin25 (C25),
-        .coin50 (C50),
-        .food   (f),
-        .change (Ch),
-        .state  (ssd)
-    );
 endmodule
 
