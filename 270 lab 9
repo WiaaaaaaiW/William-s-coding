@@ -1,247 +1,65 @@
-//========================================================
-// 1. Clock Divider (50MHz -> 1Hz)
-//========================================================
-module clock_divider(
-    input  wire clk,
-    output reg  new_clk
-);
-    reg [27:0] counter = 0;
-
-    always @(posedge clk) begin
-        if(counter == 28'd25_000_000) begin
-            counter <= counter + 1;
-            new_clk <= 1;
-        end
-        else if(counter == 28'd50_000_000) begin
-            counter <= 0;
-            new_clk <= 0;
-        end
-        else begin
-            counter <= counter + 1;
-            new_clk <= new_clk;
-        end
-    end
-endmodule
-
-
-
-//========================================================
-// 2. 7-Segment Decoder
-//========================================================
-module sevenseg_decoder(
-    input  wire [3:0] Num,
-    output reg  [6:0] SevenSeg
-);
-
-    always @(*) begin
-        case(Num)
-            4'b0000: SevenSeg = 7'b1000000; // 0
-            4'b0001: SevenSeg = 7'b1111001; // 1
-            4'b0010: SevenSeg = 7'b0100100; // 2
-            4'b0011: SevenSeg = 7'b0110000; // 3
-            4'b0100: SevenSeg = 7'b0011001; // 4
-            4'b0101: SevenSeg = 7'b0010010; // 5
-            4'b0110: SevenSeg = 7'b0000010; // 6
-            4'b0111: SevenSeg = 7'b1111000; // 7
-            4'b1000: SevenSeg = 7'b0000000; // 8
-            4'b1001: SevenSeg = 7'b0010000; // 9
-            4'b1010: SevenSeg = 7'b0001000; // A
-            4'b1011: SevenSeg = 7'b0000011; // B
-            4'b1100: SevenSeg = 7'b1000110; // C
-            4'b1101: SevenSeg = 7'b0100001; // D
-            4'b1110: SevenSeg = 7'b0000110; // E
-            4'b1111: SevenSeg = 7'b0001110; // F
-        endcase
-    end
-endmodule
-
-
-
-//========================================================
-// 3. Edge Detection Module
-//========================================================
-module edge_detection(
-    input clk1,
-    input clk2,
+module myFSM(
+    input clk,
     input cent_25,
     input cent_50,
     input reset,
-    output reg new_cent_25,
-    output reg new_cent_50,
-    output reg new_reset
-);
-    reg reset_hold;
-    reg cent_25_hold;
-    reg cent_50_hold;
-
-    reg cent_25_hold_old;
-    reg cent_50_hold_old;
-    reg reset_hold_old;
-
-    reg cent_25_old;
-    reg cent_50_old;
-    reg reset_old;
-
-
-    // Sync domain 1
-    always @(posedge clk1) begin
-        reset_old <= reset;
-        if(reset_old == 1 && reset == 0)
-            reset_hold <= 1;
-        else if(new_reset == 1)
-            reset_hold <= 0;
-
-        cent_25_old <= cent_25;
-        if(cent_25_old == 1 && cent_25 == 0)
-            cent_25_hold <= 1;
-        else if(new_cent_25 == 1)
-            cent_25_hold <= 0;
-
-        cent_50_old <= cent_50;
-        if(cent_50_old == 1 && cent_50 == 0)
-            cent_50_hold <= 1;
-        else if(new_cent_50 == 1)
-            cent_50_hold <= 0;
-    end
-
-
-    // Sync domain 2
-    always @(posedge clk2) begin
-        cent_25_hold_old <= cent_25_hold;
-        cent_50_hold_old <= cent_50_hold;
-        reset_hold_old   <= reset_hold;
-
-        if(cent_25_hold_old == 0 && cent_25_hold == 1)
-            new_cent_25 <= 1;
-        else if(new_cent_25 == 1)
-            new_cent_25 <= 0;
-
-        if(cent_50_hold_old == 0 && cent_50_hold == 1)
-            new_cent_50 <= 1;
-        else if(new_cent_50 == 1)
-            new_cent_50 <= 0;
-
-        if(reset_hold_old == 0 && reset_hold == 1)
-            new_reset <= 1;
-        else if(new_reset == 1)
-            new_reset <= 0;
-    end
-endmodule
-
-
-
-//========================================================
-// 4. Vending Machine FSM
-//========================================================
-module vending_fsm (
-    input        clk,
-    input        reset,
-    input        coin25,
-    input        coin50,
-    output reg   food,
-    output reg   change,
-    output reg [1:0] state    // 00=S0, 01=S1, 10=S2
+    output reg food,
+    output reg change,
+    output reg [3:0] stateDisplay
 );
 
-    localparam S0 = 2'b00;   // 0 cents
-    localparam S1 = 2'b01;   // 25 cents
-    localparam S2 = 2'b10;   // 50 cents
+reg [1:0] state;
+parameter S0 = 2'b00,
+          S1 = 2'b01,
+          S2 = 2'b10; // 50¢ holding state
 
-    reg [1:0] next_state;
-
-    always @(*) begin
-        // defaults
-        next_state = state;
-        food       = 0;
-        change     = 0;
-
-        // invalid input: both coins inserted
-        if (coin25 && coin50) begin
-            next_state = state;  // ignore
-            food       = 0;
-            change     = 0;
-        end
-        else begin
-            case (state)
-
-                //==========================================
-                // STATE 00 (0 cents)
-                //==========================================
-                S0: begin
-                    if (coin25)          next_state = S1;  // 25
-                    else if (coin50)     next_state = S2;  // 50
-                    else                 next_state = S0;  // no coin
-                end
-
-                //==========================================
-                // STATE 01 (25 cents)
-                //==========================================
-                S1: begin
-                    if (!coin25 && !coin50)
-                        next_state = S1;                // stay
-                    else if (coin50) begin
-                        next_state = S0;                // 25 + 50 = 75
-                        food       = 1;
-                        change     = 0;
-                    end
-                    else if (coin25) begin
-                        next_state = S2;                // 25 + 25 = 50
-                    end
-                end
-
-                //==========================================
-                // STATE 10 (50 cents)
-                //==========================================
-                S2: begin
-                    if (!coin25 && !coin50)
-                        next_state = S2;                // stay
-                    else if (coin50) begin
-                        next_state = S0;                // 50 + 50 = 100
-                        food       = 1;
-                        change     = 1;
-                    end
-                    else if (coin25) begin
-                        next_state = S0;                // 50 + 25 = 75
-                        food       = 1;
-                        change     = 0;
-                    end
-                end
-
-                default: next_state = S0;
-
-            endcase
-        end
+// Sequential Block: state transitions and synchronous outputs
+always @(posedge clk)
+begin
+    if (reset) begin
+        state <= S0;
+        food <= 0;
+        change <= 0;
     end
+    else if (!(cent_25 & cent_50)) begin // ignore simultaneous input
+        // Default outputs
+        food <= 0;
+        change <= 0;
 
-    always @(posedge clk) begin
-        if (reset)
-            state <= S0;
-        else
-            state <= next_state;
+        case(state)
+            S0: begin
+                if (cent_25)
+                    state <= S1;
+                else if (cent_50)
+                    state <= S2;
+            end
+            S1: begin
+                if (cent_25)
+                    state <= S2;           // 25+25=50
+                else if (cent_50) begin
+                    state <= S0;           // 25+50=75 → dispense
+                    food <= 1;
+                end
+            end
+            S2: begin
+                if (cent_25) begin
+                    state <= S0;           // 50+25=75 → dispense
+                    food <= 1;
+                end
+                else if (cent_50) begin
+                    state <= S0;           // 50+50=100 → dispense + change
+                    food <= 1;
+                    change <= 1;
+                end
+            end
+        endcase
     end
-endmodule
+end
 
-//========================================================
-// 5. Top-Level Wrapper
-//========================================================
-module myFSM(
-    input  wire clk,
-    input  wire C25,
-    input  wire C50,
-    input  wire reset,
-    output wire f,
-    output wire Ch,
-    output wire [1:0] ssd
-);
+// Optional: display current state on LEDs
+always @* begin
+    stateDisplay = state;
+end
 
-    vending_fsm U (
-        .clk    (clk),
-        .reset  (reset),
-        .coin25 (C25),
-        .coin50 (C50),
-        .food   (f),
-        .change (Ch),
-        .state  (ssd)
-    );
 endmodule
 
