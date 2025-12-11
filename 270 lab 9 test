@@ -1,78 +1,68 @@
 module test;
-    reg clk, C25, C50, reset;
-    wire f;          // food
-    wire Ch;         // change
-    wire [1:0] ssd;  // state from FSM (00,01,10)
+  reg clk,C25,C50,reset;
+  wire f;
+  wire Ch;
+  wire [3:0]ssd;
 
-    // instantiate the vending_fsm (matches previous code)
-    vending_fsm T (
-        .clk    (clk),
-        .reset  (reset),
-        .coin25 (C25),
-        .coin50 (C50),
-        .food   (f),
-        .change (Ch),
-        .state  (ssd)
-    );
+  myFSM T(clk,C25,C50,reset,f,Ch,ssd);
 
-    initial begin
-        $dumpfile("dump.vcd");
-        $dumpvars(0, test);   // show all signals
+  initial begin
+    $dumpfile("dump.vcd");
+    $dumpvars(0,test);
 
-        clk   = 1'b0;
-        reset = 1'b0;
-        #1
-        reset = 1'b1;         // reset pulse
-        C25   = 1'b0;
-        C50   = 1'b0;
-        #2
-        reset = 1'b0;
+    clk=1'b0;
+    reset=1'b0;
+    #1
+    reset=1'b1;
+    C25=1'b0;
+    C50=1'b0;
+    #2
+    reset=1'b0;
+    #1
 
-        #1 // wait
+    //1st order 25+50
+    C25=1'b1;
+    #2
+    C25=1'b0;
+    #2
+    C50=1'b1;
+    #2
+    C50=1'b0;
+    #2
 
-        // 1st order: 25 + 50
-        C25 = 1'b1;
-        #2;
-        C25 = 1'b0;
-        #2; // wait
+    #4
+    //2nd order 50+50
+    C50 = 1'b1;
+    #2
+    C50 = 1'b0;
+    #2
+    C50 = 1'b1;
+    #2
+    C50 = 1'b0;
+    #2
 
-        C50 = 1'b1;
-        #2;
-        C50 = 1'b0;
-        #2; // wait
+    #4
+    //3rd order 25+25+25
+    C25 = 1'b1;
+    #2
+    C25 = 1'b0;
+    #2
+    C25 = 1'b1;
+    #2
+    C25 = 1'b0;
+    #2
+    C25 = 1'b1;
+    #2
+    C25 = 1'b0;
+    #2
 
-        // 2nd order: 50 + 50
-        C50 = 1'b1;
-        #2;
-        C50 = 1'b0;
-        #2; // wait
+    #4
+    // Finish simulation
+    $finish;
+  end
 
-        C50 = 1'b1;
-        #2;
-        C50 = 1'b0;
-        #2; // wait
-
-        // 3rd order: 25 + 25 + 25
-        C25 = 1'b1;
-        #2;
-        C25 = 1'b0;
-        #2; // wait
-
-        C25 = 1'b1;
-        #2;
-        C25 = 1'b0;
-        #2; // wait
-
-        C25 = 1'b1;
-        #2;
-        C25 = 1'b0;
-        #2; // wait
-
-        #4;
-        $finish;
-    end
-
-    always #1 clk = ~clk;   // clock changes every 1 time unit
+  // Clock generation
+  always #1 clk = ~clk;
 
 endmodule
 
