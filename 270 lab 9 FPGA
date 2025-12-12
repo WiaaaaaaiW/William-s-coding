@@ -1,4 +1,3 @@
-//send the boards 50MHz clock to this and on the output will be 1Hz clock
 module clock_divider(
 	input clk,
 	output reg new_clk
@@ -21,8 +20,7 @@ module clock_divider(
 	end
 endmodule
 
-//connect the push buttons of the boards to the input pins of this module and the output is what you will you to control your state machine
-//the clock that gets sent to this is the 1Hz clock that comes from the output above.
+
 
 module edge_detection
 (
@@ -37,16 +35,13 @@ module edge_detection
 );
 	reg reset_hold;
 	reg cent_25_hold;
-	reg cent_50_hold;
-	
+	reg cent_50_hold;	
 	reg cent_25_hold_old;
 	reg cent_50_hold_old;
-	reg reset_hold_old;
-	
+	reg reset_hold_old;	
 	reg cent_25_old;
 	reg cent_50_old;
 	reg reset_old;
-	
 	
 	always@(posedge clk1)
 	begin
@@ -67,7 +62,6 @@ module edge_detection
 		begin
 			cent_25_hold <= 0;
 		end
-		
 		
 		cent_50_old <= cent_50;
 		if(cent_50_old == 1 & cent_50==0)
@@ -111,16 +105,16 @@ module edge_detection
 		begin
 			new_reset <= 0;
 		end
-
 	end
 endmodule
 
-module ssd_hex(
-  input [3:0] Num,        // 4-bit input number (0–F)
-  output reg [6:0] SevenSeg // 7-bit output for segments (a–g)
-);
 
-always@(*) // run when any input changes
+
+module ssd_hex(
+  input [3:0] Num,
+  output reg [6:0] SevenSeg
+);
+always@(*)
 begin
   case(Num)
     4'b0000: SevenSeg = 7'b1000000; // 0
@@ -141,8 +135,9 @@ begin
     4'b1111: SevenSeg = 7'b0001110; // F
   endcase
 end
-
 endmodule
+
+
 
 module myFSM(
     input clk,
@@ -151,15 +146,15 @@ module myFSM(
     input reset,
     output reg food,
     output reg change,
-    output reg [3:0] stateDisplay
+    output reg [3:0] stateDisplay,
+    output wire [6:0] seg
 );
 
 reg [1:0] state;
 parameter S0 = 2'b00,
           S1 = 2'b01,
-          S2 = 2'b10; // 50¢ holding state
+          S2 = 2'b10;
 
-// Sequential Block: state transitions and synchronous outputs
 always @(posedge clk)
 begin
     if (reset) begin
@@ -167,8 +162,7 @@ begin
         food <= 0;
         change <= 0;
     end
-    else if (!(cent_25 & cent_50)) begin // ignore simultaneous input
-        // Default outputs
+    else if (!(cent_25 & cent_50)) begin
         food <= 0;
         change <= 0;
 
@@ -181,19 +175,19 @@ begin
             end
             S1: begin
                 if (cent_25)
-                    state <= S2;           // 25+25=50
+                    state <= S2;
                 else if (cent_50) begin
-                    state <= S0;           // 25+50=75 → dispense
+                    state <= S0;
                     food <= 1;
                 end
             end
             S2: begin
                 if (cent_25) begin
-                    state <= S0;           // 50+25=75 → dispense
+                    state <= S0;
                     food <= 1;
                 end
                 else if (cent_50) begin
-                    state <= S0;           // 50+50=100 → dispense + change
+                    state <= S0;
                     food <= 1;
                     change <= 1;
                 end
@@ -202,10 +196,58 @@ begin
     end
 end
 
-// Optional: display current state on LEDs
 always @* begin
     stateDisplay = state;
 end
 
+ssd_hex DISPLAY (
+    .Num(stateDisplay),
+    .SevenSeg(seg)
+);
+
 endmodule
+
+
+
+
+module lab9(
+    input clk,        // 50 MHz board clock
+    input cent_25,
+    input cent_50,
+    input reset,
+    output food,
+    output change,
+    output [6:0] seg
+);
+
+    wire clk1Hz;
+    wire new25, new50, newReset;
+
+
+    clock_divider CD(clk, clk1Hz);
+
+    edge_detection ED(
+        .clk1(clk),
+        .clk2(clk1Hz),
+        .cent_25(cent_25),
+        .cent_50(cent_50),
+        .reset(reset),
+        .new_cent_25(new25),
+        .new_cent_50(new50),
+        .new_reset(newReset)
+    );
+
+    myFSM FSM(
+        .clk(clk1Hz),
+        .cent_25(new25),
+        .cent_50(new50),
+        .reset(newReset),
+        .food(food),
+        .change(change),
+        .stateDisplay(), // NOT used externally
+        .seg(seg)
+    );
+
+endmodule
+
 
