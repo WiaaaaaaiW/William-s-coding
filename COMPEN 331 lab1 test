@@ -1,0 +1,41 @@
+`timescale 1ns / 1ps
+
+
+module counter_tb;
+
+reg clk;
+reg clrn;
+reg u;
+
+wire [2:0] q;
+wire a,b,c,d,e,f,g;
+   
+    counter uut (
+    .clk(clk),
+    .clrn(clrn),
+    .u(u),
+    .q(q),
+    .a(a),
+    .b(b),
+    .c(c),
+    .d(d),
+    .e(e),
+    .f(f),
+    .g(g)
+);
+
+    always #1 clk = ~clk;
+    
+
+initial begin
+    clk  = 1'b0;
+    clrn = 1'b0;
+    u    = 1'b1;
+
+    #2  clrn = 1'b1;   // release reset
+
+    #16 u = 1'b0;      // change from counting up to counting down
+
+    #18 $finish;        // stop simulation
+end
+endmodule
