@@ -1,1 +1,116 @@
+`timescale 1ns / 1ps
 
+module counter(
+    input clk,
+    input clrn,
+    input u,
+    
+    output reg [2:0] q,
+    
+    output reg a,
+    output reg b,
+    output reg c,
+    output reg d,
+    output reg e,
+    output reg f,
+    output reg g
+    );
+    
+always @(posedge clk or negedge clrn) begin
+
+    if (!clrn) begin
+        q <= 3'b000;
+    end
+
+    else if (u == 1'b1) begin
+        if (q == 3'd5)
+            q <= 3'd0;
+        else
+            q <= q + 1'b1;
+    end
+
+    else begin
+        if (q == 3'd0)
+            q <= 3'd5;
+        else
+            q <= q - 1'b1;
+    end
+
+end
+
+
+always@(*) begin // run when any input changes
+    case(q)
+        3'b000: begin
+            g = 1'b1;
+            f = 1'b0;
+            e = 1'b0;
+            d = 1'b0;
+            c = 1'b0;
+            b = 1'b0;
+            a = 1'b0;
+        end
+        
+        3'b001: begin
+            g = 1'b1;
+            f = 1'b1;
+            e = 1'b1;
+            d = 1'b1;
+            c = 1'b0;
+            b = 1'b0;
+            a = 1'b1;
+        end
+        
+        3'b010: begin
+            g = 1'b0;
+            f = 1'b1;
+            e = 1'b0;
+            d = 1'b0;
+            c = 1'b1;
+            b = 1'b0;
+            a = 1'b0;
+        end
+        
+        3'b011: begin
+            g = 1'b0;
+            f = 1'b1;
+            e = 1'b1;
+            d = 1'b0;
+            c = 1'b0;
+            b = 1'b0;
+            a = 1'b0;
+        end
+        
+        3'b100: begin
+            g = 1'b0;
+            f = 1'b0;
+            e = 1'b1;
+            d = 1'b1;
+            c = 1'b0;
+            b = 1'b0;
+            a = 1'b1;
+        end
+        
+         3'b101: begin
+            g = 1'b0;
+            f = 1'b0;
+            e = 1'b1;
+            d = 1'b0;
+            c = 1'b0;
+            b = 1'b1;
+            a = 1'b0;
+        end
+        
+        default: begin
+            g = 1'b1;
+            f = 1'b1;
+            e = 1'b1;
+            d = 1'b1;
+            c = 1'b1;
+            b = 1'b1;
+            a = 1'b1;
+        end  
+  endcase
+end
+
+endmodule
